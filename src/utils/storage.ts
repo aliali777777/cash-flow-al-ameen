@@ -1,319 +1,233 @@
 
-import { User, Product, Order, CashDrawer, Settings, DailySummary, UserRole } from '../types';
+import { User, Product, Order, UserRole, Settings, PERMISSIONS } from '../types';
 
 // Default admin user
-const defaultAdmin: User = {
+const DEFAULT_ADMIN: User = {
   id: '1',
   username: 'admin',
   password: 'admin',
+  name: 'مدير النظام',
   role: UserRole.ADMIN,
-  permissions: [],
+  permissions: Object.values(PERMISSIONS).map(id => ({ id, checked: true })),
   isActive: true,
+  createdAt: new Date(),
 };
 
 // Default settings
-const defaultSettings: Settings = {
+const DEFAULT_SETTINGS: Settings = {
   language: 'ar',
-  businessName: 'Cashflow POS',
-  businessNameAr: 'كاش فلو',
   currencySymbol: '$',
-  allowOrderModification: true,
-  requireAdminForVoid: true,
-  requireAdminForDiscount: true,
+  businessName: 'مطعمي',
+  businessAddress: 'شارع الرئيسي, المدينة',
+  businessPhone: '+123456789',
   autoPrintReceipt: true,
-  showPriceOnKitchenDisplay: false,
-  kitchenDisplayTimeout: 5, // minutes
+  autoKitchenPrint: true,
+  receiptWidth: 80,
+  showLogo: true,
+  taxRate: 0,
+  receiptFooter: 'شكراً لزيارتكم',
 };
 
-// Storage keys
-const STORAGE_KEYS = {
-  USERS: 'pos_users',
-  PRODUCTS: 'pos_products',
-  ORDERS: 'pos_orders',
-  CASH_DRAWER: 'pos_cash_drawer',
-  SETTINGS: 'pos_settings',
-  DAILY_SUMMARY: 'pos_daily_summary',
-  CURRENT_USER: 'pos_current_user',
-};
-
-// Initialize storage with default data if empty
-export const initStorage = (): void => {
-  // Check if users exist
-  const users = localStorage.getItem(STORAGE_KEYS.USERS);
-  if (!users) {
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([defaultAdmin]));
+// Initialize storage with default data
+export const initStorage = () => {
+  if (!getUsers().length) {
+    setUsers([DEFAULT_ADMIN]);
   }
-
-  // Check if settings exist
-  const settings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
-  if (!settings) {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(defaultSettings));
+  
+  if (!getProducts().length) {
+    setProducts([
+      {
+        id: '1',
+        name: 'Hamburger',
+        nameAr: 'برجر لحم',
+        category: 'Burgers',
+        price: 8.99,
+        cost: 3.50,
+        isAvailable: true,
+      },
+      {
+        id: '2',
+        name: 'Cheeseburger',
+        nameAr: 'برجر جبنة',
+        category: 'Burgers',
+        price: 9.99,
+        cost: 4.00,
+        isAvailable: true,
+      },
+      {
+        id: '3',
+        name: 'French Fries',
+        nameAr: 'بطاطا مقلية',
+        category: 'Sides',
+        price: 3.99,
+        cost: 1.20,
+        isAvailable: true,
+      },
+      {
+        id: '4',
+        name: 'Cola',
+        nameAr: 'كولا',
+        category: 'Drinks',
+        price: 2.49,
+        cost: 0.80,
+        isAvailable: true,
+      },
+      {
+        id: '5',
+        name: 'Water',
+        nameAr: 'مياه',
+        category: 'Drinks',
+        price: 1.99,
+        cost: 0.30,
+        isAvailable: true,
+      },
+    ]);
   }
-
-  // Initialize empty product list if not exists
-  if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
-    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify([]));
-  }
-
-  // Initialize empty orders list if not exists
-  if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
-    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([]));
-  }
-
-  // Initialize cash drawer if not exists
-  if (!localStorage.getItem(STORAGE_KEYS.CASH_DRAWER)) {
-    const initialCashDrawer: CashDrawer = {
-      initialAmount: 0,
-      currentAmount: 0,
-      transactions: []
-    };
-    localStorage.setItem(STORAGE_KEYS.CASH_DRAWER, JSON.stringify(initialCashDrawer));
-  }
-
-  // Initialize daily summary if not exists
-  if (!localStorage.getItem(STORAGE_KEYS.DAILY_SUMMARY)) {
-    localStorage.setItem(STORAGE_KEYS.DAILY_SUMMARY, JSON.stringify([]));
+  
+  // Initialize settings
+  if (!localStorage.getItem('settings')) {
+    updateSettings(DEFAULT_SETTINGS);
   }
 };
 
-// Generic get function
-export const getItems = <T>(key: string): T[] => {
-  const items = localStorage.getItem(key);
-  return items ? JSON.parse(items) : [];
+// User related storage functions
+export const getUsers = (): User[] => {
+  const users = localStorage.getItem('users');
+  return users ? JSON.parse(users) : [];
 };
 
-// Generic set function
-export const setItems = <T>(key: string, items: T[]): void => {
-  localStorage.setItem(key, JSON.stringify(items));
+export const setUsers = (users: User[]): void => {
+  localStorage.setItem('users', JSON.stringify(users));
 };
 
-// Generic get single item function
-export const getItem = <T>(key: string): T | null => {
-  const item = localStorage.getItem(key);
-  return item ? JSON.parse(item) : null;
-};
-
-// Generic set single item function
-export const setItem = <T>(key: string, item: T): void => {
-  localStorage.setItem(key, JSON.stringify(item));
-};
-
-// User specific functions
-export const getUsers = (): User[] => getItems<User>(STORAGE_KEYS.USERS);
-export const setUsers = (users: User[]): void => setItems(STORAGE_KEYS.USERS, users);
-export const getUserById = (id: string): User | undefined => {
-  return getUsers().find(user => user.id === id);
-};
 export const addUser = (user: User): void => {
   const users = getUsers();
   users.push(user);
   setUsers(users);
 };
-export const updateUser = (user: User): void => {
+
+export const updateUser = (updatedUser: User): void => {
   const users = getUsers();
-  const index = users.findIndex(u => u.id === user.id);
+  const index = users.findIndex(u => u.id === updatedUser.id);
+  
   if (index !== -1) {
-    users[index] = user;
+    users[index] = updatedUser;
     setUsers(users);
   }
 };
+
 export const deleteUser = (id: string): void => {
-  const users = getUsers().filter(user => user.id !== id);
-  setUsers(users);
+  const users = getUsers();
+  const filteredUsers = users.filter(user => user.id !== id);
+  setUsers(filteredUsers);
 };
 
-// Current User functions
-export const setCurrentUser = (user: User): void => {
-  setItem(STORAGE_KEYS.CURRENT_USER, user);
-};
 export const getCurrentUser = (): User | null => {
-  return getItem<User>(STORAGE_KEYS.CURRENT_USER);
-};
-export const clearCurrentUser = (): void => {
-  localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+  const currentUser = localStorage.getItem('currentUser');
+  return currentUser ? JSON.parse(currentUser) : null;
 };
 
-// Product specific functions
-export const getProducts = (): Product[] => getItems<Product>(STORAGE_KEYS.PRODUCTS);
-export const setProducts = (products: Product[]): void => setItems(STORAGE_KEYS.PRODUCTS, products);
-export const getProductById = (id: string): Product | undefined => {
-  return getProducts().find(product => product.id === id);
+export const setCurrentUser = (user: User): void => {
+  localStorage.setItem('currentUser', JSON.stringify(user));
 };
+
+export const clearCurrentUser = (): void => {
+  localStorage.removeItem('currentUser');
+};
+
+// Product related storage functions
+export const getProducts = (): Product[] => {
+  const products = localStorage.getItem('products');
+  return products ? JSON.parse(products) : [];
+};
+
+export const setProducts = (products: Product[]): void => {
+  localStorage.setItem('products', JSON.stringify(products));
+};
+
 export const addProduct = (product: Product): void => {
   const products = getProducts();
   products.push(product);
   setProducts(products);
 };
-export const updateProduct = (product: Product): void => {
+
+export const updateProduct = (updatedProduct: Product): void => {
   const products = getProducts();
-  const index = products.findIndex(p => p.id === product.id);
+  const index = products.findIndex(p => p.id === updatedProduct.id);
+  
   if (index !== -1) {
-    products[index] = product;
+    products[index] = updatedProduct;
     setProducts(products);
   }
 };
+
 export const deleteProduct = (id: string): void => {
-  const products = getProducts().filter(product => product.id !== id);
-  setProducts(products);
+  const products = getProducts();
+  const filteredProducts = products.filter(product => product.id !== id);
+  setProducts(filteredProducts);
 };
 
-// Order specific functions
-export const getOrders = (): Order[] => getItems<Order>(STORAGE_KEYS.ORDERS);
-export const setOrders = (orders: Order[]): void => setItems(STORAGE_KEYS.ORDERS, orders);
-export const getOrderById = (id: string): Order | undefined => {
-  return getOrders().find(order => order.id === id);
+// Order related storage functions
+export const getOrders = (): Order[] => {
+  const orders = localStorage.getItem('orders');
+  return orders ? JSON.parse(orders) : [];
 };
+
+export const setOrders = (orders: Order[]): void => {
+  localStorage.setItem('orders', JSON.stringify(orders));
+};
+
 export const addOrder = (order: Order): void => {
   const orders = getOrders();
   orders.push(order);
   setOrders(orders);
 };
-export const updateOrder = (order: Order): void => {
+
+export const updateOrder = (updatedOrder: Order): void => {
   const orders = getOrders();
-  const index = orders.findIndex(o => o.id === order.id);
+  const index = orders.findIndex(o => o.id === updatedOrder.id);
+  
   if (index !== -1) {
-    orders[index] = order;
+    orders[index] = updatedOrder;
     setOrders(orders);
   }
 };
+
 export const deleteOrder = (id: string): void => {
-  const orders = getOrders().filter(order => order.id !== id);
-  setOrders(orders);
+  const orders = getOrders();
+  const filteredOrders = orders.filter(order => order.id !== id);
+  setOrders(filteredOrders);
 };
-export const getTodaysOrders = (): Order[] => {
+
+export const generateOrderNumber = (): string => {
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const dateStr = today.toISOString().slice(2, 10).replace(/-/g, '');
   
-  return getOrders().filter(order => {
+  const orders = getOrders();
+  const todayOrders = orders.filter(order => {
     const orderDate = new Date(order.createdAt);
-    orderDate.setHours(0, 0, 0, 0);
-    return orderDate.getTime() === today.getTime();
+    return orderDate.toDateString() === today.toDateString();
   });
+  
+  const orderCount = todayOrders.length + 1;
+  return `${dateStr}-${orderCount.toString().padStart(3, '0')}`;
 };
 
-// Cash drawer functions
-export const getCashDrawer = (): CashDrawer => {
-  return getItem<CashDrawer>(STORAGE_KEYS.CASH_DRAWER) || {
-    initialAmount: 0,
-    currentAmount: 0,
-    transactions: []
-  };
-};
-export const setCashDrawer = (cashDrawer: CashDrawer): void => {
-  setItem(STORAGE_KEYS.CASH_DRAWER, cashDrawer);
-};
-export const addCashDrawerTransaction = (transaction: CashDrawer['transactions'][0]): void => {
-  const cashDrawer = getCashDrawer();
-  cashDrawer.transactions.push(transaction);
-  
-  if (transaction.type === 'sale' || transaction.type === 'cashin') {
-    cashDrawer.currentAmount += transaction.amount;
-  } else if (transaction.type === 'refund' || transaction.type === 'payout') {
-    cashDrawer.currentAmount -= transaction.amount;
-  }
-  
-  setCashDrawer(cashDrawer);
-};
-
-// Settings functions
+// Settings related storage functions
 export const getSettings = (): Settings => {
-  return getItem<Settings>(STORAGE_KEYS.SETTINGS) || defaultSettings;
-};
-export const setSettings = (settings: Settings): void => {
-  setItem(STORAGE_KEYS.SETTINGS, settings);
+  const settings = localStorage.getItem('settings');
+  return settings ? JSON.parse(settings) : DEFAULT_SETTINGS;
 };
 
-// Daily summary functions
-export const getDailySummaries = (): DailySummary[] => {
-  return getItems<DailySummary>(STORAGE_KEYS.DAILY_SUMMARY);
-};
-export const addDailySummary = (summary: DailySummary): void => {
-  const summaries = getDailySummaries();
-  summaries.push(summary);
-  setItems(STORAGE_KEYS.DAILY_SUMMARY, summaries);
-};
-export const generateDailySummary = (date: Date = new Date()): DailySummary => {
-  const targetDate = new Date(date);
-  targetDate.setHours(0, 0, 0, 0);
-  
-  const orders = getOrders().filter(order => {
-    if (order.status === 'canceled' || order.isVoided) return false;
-    
-    const orderDate = new Date(order.createdAt);
-    orderDate.setHours(0, 0, 0, 0);
-    return orderDate.getTime() === targetDate.getTime();
-  });
-  
-  // Calculate totals
-  const totalSales = orders.reduce((sum, order) => sum + order.finalAmount, 0);
-  
-  // Calculate products sold
-  const productMap = new Map<string, {
-    productId: string;
-    productName: string;
-    quantity: number;
-    sales: number;
-    profit: number;
-  }>();
-  
-  orders.forEach(order => {
-    order.items.forEach(item => {
-      const product = item.product;
-      const existingProduct = productMap.get(product.id);
-      
-      if (existingProduct) {
-        existingProduct.quantity += item.quantity;
-        existingProduct.sales += item.quantity * product.price;
-        existingProduct.profit += item.quantity * (product.price - product.cost);
-      } else {
-        productMap.set(product.id, {
-          productId: product.id,
-          productName: product.name,
-          quantity: item.quantity,
-          sales: item.quantity * product.price,
-          profit: item.quantity * (product.price - product.cost)
-        });
-      }
-    });
-  });
-  
-  const productsSold = Array.from(productMap.values());
-  
-  // Calculate total profit
-  const totalProfit = productsSold.reduce((sum, product) => sum + product.profit, 0);
-  
-  // Calculate expected cash in drawer
-  const cashDrawer = getCashDrawer();
-  const cashTransactions = cashDrawer.transactions.filter(tx => {
-    const txDate = new Date(tx.timestamp);
-    txDate.setHours(0, 0, 0, 0);
-    return txDate.getTime() === targetDate.getTime() && tx.type === 'sale' && tx.orderId;
-  });
-  
-  const expectedCashInDrawer = cashTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-  
-  const summary: DailySummary = {
-    date: targetDate,
-    totalSales,
-    totalOrders: orders.length,
-    totalProfit,
-    expectedCashInDrawer,
-    productsSold
-  };
-  
-  return summary;
+export const updateSettings = (settings: Settings): void => {
+  localStorage.setItem('settings', JSON.stringify(settings));
 };
 
-// Generate a new order number
-export const generateOrderNumber = (): number => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const todaysOrders = getOrders().filter(order => {
-    const orderDate = new Date(order.createdAt);
-    orderDate.setHours(0, 0, 0, 0);
-    return orderDate.getTime() === today.getTime();
-  });
-  
-  return todaysOrders.length + 1;
+// Clear all data (for testing purposes)
+export const clearAllData = (): void => {
+  localStorage.removeItem('users');
+  localStorage.removeItem('products');
+  localStorage.removeItem('orders');
+  localStorage.removeItem('currentUser');
+  localStorage.removeItem('settings');
 };

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/common/Sidebar';
 import { Button } from '@/components/ui/button';
@@ -430,6 +431,257 @@ const Cashier = () => {
                   )}
                 </TabsTrigger>
               </TabsList>
+              <TabsContent value="products" className="h-[calc(100vh-12rem)] overflow-y-auto">
+                <div className="p-4">
+                  <div className="relative mb-4">
+                    <Search className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      placeholder="بحث عن منتج..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-3 pr-10 rtl"
+                    />
+                  </div>
+                  
+                  <ScrollArea className="w-full mb-4">
+                    <div className="flex space-x-1 rtl pb-2">
+                      <Button
+                        variant={!selectedCategory ? "default" : "outline"}
+                        className="rounded-full"
+                        onClick={() => setSelectedCategory(null)}
+                      >
+                        الكل
+                      </Button>
+                      
+                      {categories.map((category) => (
+                        <Button
+                          key={category}
+                          variant={selectedCategory === category ? "default" : "outline"}
+                          className="rounded-full whitespace-nowrap"
+                          onClick={() => setSelectedCategory(category)}
+                        >
+                          {category}
+                        </Button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    {filteredProducts.length > 0 ? (
+                      filteredProducts.map((product) => (
+                        <Card
+                          key={product.id}
+                          className="h-[140px] overflow-hidden cursor-pointer hover:border-primary transition-colors"
+                          onClick={() => handleAddToOrder(product)}
+                        >
+                          <CardContent className="p-0 h-full flex flex-col">
+                            <div 
+                              className="w-full h-16 bg-muted flex items-center justify-center text-xl font-bold bg-cover bg-center"
+                              style={product.image ? { backgroundImage: `url(${product.image})` } : {}}
+                            >
+                              {!product.image && product.name.charAt(0)}
+                            </div>
+                            <div className="p-2 flex-1 flex flex-col">
+                              <div className="font-medium rtl line-clamp-1 text-sm" dir="rtl">
+                                {product.nameAr || product.name}
+                              </div>
+                              <div className="text-primary text-sm font-bold mt-auto">
+                                {settings.currencySymbol}{product.price.toFixed(2)}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    ) : (
+                      <div className="col-span-full flex items-center justify-center py-8 text-muted-foreground">
+                        لا توجد منتجات مطابقة للبحث
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="order" className="h-[calc(100vh-12rem)] overflow-y-auto">
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center">
+                      <ShoppingCart className="h-5 w-5 ml-2" />
+                      <h2 className="font-medium">
+                        {currentOrder?.items.length 
+                          ? `الطلب #${currentOrder.orderNumber}`
+                          : 'طلب جديد'
+                        }
+                      </h2>
+                    </div>
+                    
+                    {currentOrder?.items.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => {
+                          if (confirm('هل أنت متأكد من إلغاء الطلب الحالي؟')) {
+                            cancelOrder();
+                          }
+                        }}
+                      >
+                        <X className="h-5 w-5" />
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2 mb-4">
+                    {currentOrder?.items.length ? (
+                      currentOrder.items.map((item, index) => (
+                        <div key={index} className="flex flex-col border rounded-lg p-3">
+                          <div className="flex justify-between">
+                            <div className="font-medium rtl">
+                              {item.product.nameAr || item.product.name}
+                            </div>
+                            <div className="text-primary">
+                              {settings.currencySymbol}{item.product.price.toFixed(2)}
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-between items-center mt-2">
+                            <div className="flex items-center space-x-2 rtl">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7 rounded-full"
+                                onClick={() => handleQuantityChange(index, false)}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              
+                              <span className="w-8 text-center font-medium">{item.quantity}</span>
+                              
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7 rounded-full"
+                                onClick={() => handleQuantityChange(index, true)}
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            
+                            <div className="flex items-center space-x-2 rtl">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleOpenNoteDialog(index)}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                              
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive"
+                                onClick={() => removeItemFromOrder(index)}
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          {item.notes && (
+                            <div className="mt-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded-md rtl">
+                              {item.notes}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        لا توجد منتجات في الطلب
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-1.5 rtl mb-4">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">المجموع</span>
+                      <span>{settings.currencySymbol}{calculateOrderTotal().toFixed(2)}</span>
+                    </div>
+                    
+                    {calculateOrderDiscount() > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">الخصم</span>
+                        <span className="text-destructive">
+                          -{settings.currencySymbol}{calculateOrderDiscount().toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    
+                    <Separator className="my-2" />
+                    
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>الإجمالي</span>
+                      <span className="text-primary">
+                        {settings.currencySymbol}{calculateFinalAmount().toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          disabled={!currentOrder?.items.length}
+                        >
+                          <Tag className="ml-2 h-4 w-4" />
+                          خصم
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>تطبيق خصم</DialogTitle>
+                        </DialogHeader>
+                        <div className="py-4">
+                          <p className="text-center text-muted-foreground">
+                            ميزة الخصومات قيد التطوير
+                          </p>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      disabled={!currentOrder?.items.length}
+                      onClick={() => toast('ميزة الطباعة قيد التطوير')}
+                    >
+                      <Printer className="ml-2 h-4 w-4" />
+                      طباعة
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <Button 
+                      onClick={() => handlePayment('cash')}
+                      className="w-full py-6"
+                      disabled={!currentOrder?.items.length}
+                    >
+                      <Banknote className="ml-2 h-5 w-5" />
+                      كاش
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      className="w-full py-6"
+                      disabled={!currentOrder?.items.length}
+                      onClick={() => handlePayment('card')}
+                    >
+                      <CreditCard className="ml-2 h-5 w-5" />
+                      بطاقة
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
           </div>
         </main>

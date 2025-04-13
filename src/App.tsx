@@ -17,6 +17,8 @@ import Kitchen from "./pages/Kitchen";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
+import Products from "./pages/Products";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +82,24 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       <Reports />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/products" 
+                  element={
+                    <ProtectedRoute>
+                      <Products />
+                    </ProtectedRoute>
+                  } 
+                />
+                
+                <Route 
+                  path="/settings" 
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
                     </ProtectedRoute>
                   } 
                 />

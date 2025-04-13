@@ -12,7 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 // Pages
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
-import Cashier from "./pages/Cashier";
+import CashierPage from "./pages/cashier/CashierPage";
 import Kitchen from "./pages/Kitchen";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
@@ -54,7 +54,7 @@ const App = () => (
                   path="/cashier" 
                   element={
                     <ProtectedRoute>
-                      <Cashier />
+                      <CashierPage />
                     </ProtectedRoute>
                   } 
                 />

@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useOrders } from '@/context/OrderContext';
+import { useOrder } from '@/context/OrderContext';
 import { Sidebar } from '@/components/common/Sidebar';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,12 +11,15 @@ import { KitchenOrderStatus, Order } from '@/types';
 import { cn } from '@/lib/utils';
 
 const Kitchen = () => {
-  const { kitchenOrders, updateKitchenStatus, markOrderAsDelivered } = useOrders();
+  const { orders, getActiveKitchenOrders, updateKitchenOrderStatus } = useOrder();
   const { currentUser } = useAuth();
   const settings = getSettings();
   
   // State for preparation time
   const [prepTimes, setPrepTimes] = useState<Record<string, number>>({});
+  
+  // Get active kitchen orders
+  const kitchenOrders = getActiveKitchenOrders();
   
   // Group orders by status
   const newOrders = kitchenOrders.filter(order => order.kitchenStatus === 'new');
@@ -25,8 +27,7 @@ const Kitchen = () => {
   const readyOrders = kitchenOrders.filter(order => order.kitchenStatus === 'ready');
   
   const handleStatusChange = (order: Order, newStatus: KitchenOrderStatus) => {
-    const prepTime = prepTimes[order.id];
-    updateKitchenStatus(order.id, newStatus, prepTime);
+    updateKitchenOrderStatus(order.id, newStatus);
   };
   
   const handlePrepTimeChange = (orderId: string, minutes: number) => {
@@ -34,6 +35,11 @@ const Kitchen = () => {
       ...prev,
       [orderId]: minutes
     }));
+  };
+  
+  const markOrderAsDelivered = (orderId: string) => {
+    // Mark the order as delivered by updating its status
+    updateKitchenOrderStatus(orderId, 'delivered');
   };
   
   // Calculate remaining time

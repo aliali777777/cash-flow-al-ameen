@@ -21,7 +21,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 import { useProducts } from '@/context/ProductContext';
-import { useOrders } from '@/context/OrderContext';
+import { useOrder } from '@/context/OrderContext';
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Product, OrderItem, PERMISSIONS } from '@/types';
@@ -35,17 +35,15 @@ const Cashier = () => {
   const { products, availableProducts } = useProducts();
   const { 
     currentOrder, 
-    initializeOrder, 
+    initNewOrder,
     addItemToOrder, 
     removeItemFromOrder, 
     updateItemQuantity,
-    updateItemNotes,
-    completeOrder,
+    clearCurrentOrder,
+    saveOrder,
     cancelOrder,
-    calculateOrderTotal,
-    calculateOrderDiscount,
-    calculateFinalAmount
-  } = useOrders();
+    calculateTotalAmount
+  } = useOrder();
   
   const settings = getSettings();
   
@@ -74,26 +72,41 @@ const Cashier = () => {
   // Handle order initialization if needed
   React.useEffect(() => {
     if (!currentOrder && hasPermission(PERMISSIONS.CREATE_ORDERS)) {
-      initializeOrder();
+      initNewOrder(currentUser?.id || '');
     }
-  }, [currentOrder, hasPermission, initializeOrder]);
+  }, [currentOrder, hasPermission, initNewOrder, currentUser]);
   
   const handleAddToOrder = (product: Product) => {
     if (!currentOrder) {
-      initializeOrder();
-      setTimeout(() => addItemToOrder(product, 1), 100);
+      initNewOrder(currentUser?.id || '');
+      setTimeout(() => {
+        const orderItem: OrderItem = {
+          productId: product.id,
+          product,
+          quantity: 1
+        };
+        addItemToOrder(orderItem);
+      }, 100);
       return;
     }
     
-    addItemToOrder(product, 1);
+    const orderItem: OrderItem = {
+      productId: product.id,
+      product,
+      quantity: 1
+    };
+    addItemToOrder(orderItem);
   };
   
   const handleQuantityChange = (index: number, increment: boolean) => {
-    const item = currentOrder?.items[index];
-    if (!item) return;
+    if (!currentOrder || !currentOrder.items[index]) return;
     
-    const newQuantity = increment ? item.quantity + 1 : Math.max(1, item.quantity - 1);
-    updateItemQuantity(index, newQuantity);
+    const productId = currentOrder.items[index].productId;
+    const newQuantity = increment 
+      ? currentOrder.items[index].quantity + 1 
+      : Math.max(1, currentOrder.items[index].quantity - 1);
+    
+    updateItemQuantity(productId, newQuantity);
   };
   
   const handleOpenNoteDialog = (index: number) => {
@@ -102,8 +115,13 @@ const Cashier = () => {
   };
   
   const handleSaveNote = () => {
-    if (selectedItemIndex !== null) {
-      updateItemNotes(selectedItemIndex, itemNote);
+    if (selectedItemIndex !== null && currentOrder) {
+      const updatedItems = [...currentOrder.items];
+      updatedItems[selectedItemIndex] = {
+        ...updatedItems[selectedItemIndex],
+        notes: itemNote
+      };
+      
       setSelectedItemIndex(null);
       setItemNote('');
     }
@@ -115,7 +133,7 @@ const Cashier = () => {
       return;
     }
     
-    completeOrder(method);
+    saveOrder(undefined, undefined, method);
     
     if (settings.autoPrintReceipt) {
       // Mock receipt printing
@@ -125,7 +143,7 @@ const Cashier = () => {
     
     // Reinitialize a new order
     setTimeout(() => {
-      initializeOrder();
+      initNewOrder(currentUser?.id || '');
     }, 500);
   };
   

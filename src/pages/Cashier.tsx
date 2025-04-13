@@ -1,72 +1,67 @@
 
-import React, { useState } from 'react';
-import { Sidebar } from '@/components/common/Sidebar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Search, 
-  ShoppingCart, 
-  Trash, 
-  Plus, 
-  Minus, 
-  Tag, 
-  CreditCard, 
-  Banknote, 
-  Printer, 
-  X,
-  MoreHorizontal,
-} from 'lucide-react';
-import { useProducts } from '@/context/ProductContext';
+import React, { useState, useEffect } from 'react';
 import { useOrder } from '@/context/OrderContext';
+import { useProducts } from '@/context/ProductContext';
+import {
+  Search,
+  X,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash,
+  Receipt,
+  Tag,
+  Clock
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Sidebar } from '@/components/common/Sidebar';
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Product, OrderItem, PERMISSIONS } from '@/types';
 import { getSettings } from '@/utils/storage';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { DiscountDialog } from '@/components/order/DiscountDialog';
+import { PaymentDialog } from '@/components/order/PaymentDialog';
 
 const Cashier = () => {
+  const { currentOrder, initNewOrder, addItemToOrder, removeItemFromOrder, updateItemQuantity, clearCurrentOrder } = useOrder();
+  const { availableProducts, getProductsByCategory } = useProducts();
   const { currentUser, hasPermission } = useAuth();
-  const { products, availableProducts } = useProducts();
-  const { 
-    currentOrder, 
-    initNewOrder,
-    addItemToOrder, 
-    removeItemFromOrder, 
-    updateItemQuantity,
-    clearCurrentOrder,
-    saveOrder,
-    cancelOrder,
-    calculateTotalAmount
-  } = useOrder();
-  
   const settings = getSettings();
   
-  // State for product searching and filtering
+  // State for product filter
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [productQuantity, setProductQuantity] = useState<number>(1);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [notes, setNotes] = useState<string>('');
   
-  // State for note input
-  const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
-  const [itemNote, setItemNote] = useState('');
-
-  // Get unique categories from products
-  const categories = [...new Set(products.map(product => product.category))];
+  // Get unique categories
+  const categories = React.useMemo(() => {
+    const categoriesSet = new Set(availableProducts.map(p => p.category));
+    return ['all', ...Array.from(categoriesSet)];
+  }, [availableProducts]);
   
-  // Filtered products based on search and category
-  const filteredProducts = availableProducts.filter(product => {
-    const matchesSearch = searchQuery.trim() === '' || 
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.nameAr && product.nameAr.includes(searchQuery));
-    
-    const matchesCategory = !selectedCategory || product.category === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
+  // Filter products based on search and category
+  const filteredProducts = React.useMemo(() => {
+    return availableProducts.filter(product => {
+      const matchesSearch = searchQuery 
+        ? product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+          (product.nameAr && product.nameAr.includes(searchQuery))
+        : true;
+      
+      const matchesCategory = selectedCategory === 'all' 
+        ? true 
+        : product.category === selectedCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [availableProducts, searchQuery, selectedCategory]);
   
   // Helper functions for order calculations
   const calculateOrderTotal = () => {
@@ -86,77 +81,73 @@ const Cashier = () => {
   
   // Handle order initialization if needed
   React.useEffect(() => {
-    if (!currentOrder && hasPermission(PERMISSIONS.CREATE_ORDERS)) {
-      initNewOrder(currentUser?.id || '');
+    if (!currentOrder && currentUser) {
+      initNewOrder(currentUser.id);
     }
-  }, [currentOrder, hasPermission, initNewOrder, currentUser]);
+  }, [currentOrder, currentUser, initNewOrder]);
   
-  const handleAddToOrder = (product: Product) => {
-    if (!currentOrder) {
-      initNewOrder(currentUser?.id || '');
-      setTimeout(() => {
-        const orderItem: OrderItem = {
-          productId: product.id,
-          product,
-          quantity: 1
-        };
-        addItemToOrder(orderItem);
-      }, 100);
-      return;
-    }
+  const handleAddToOrder = () => {
+    if (!selectedProduct) return;
     
     const orderItem: OrderItem = {
-      productId: product.id,
-      product,
-      quantity: 1
+      productId: selectedProduct.id,
+      product: selectedProduct,
+      quantity: productQuantity,
+      notes: notes || undefined
     };
+    
     addItemToOrder(orderItem);
+    
+    // Reset state
+    setProductQuantity(1);
+    setSelectedProduct(null);
+    setNotes('');
+    
+    toast.success('تمت إضافة المنتج للطلب');
   };
   
-  const handleQuantityChange = (index: number, increment: boolean) => {
-    if (!currentOrder || !currentOrder.items[index]) return;
-    
-    const productId = currentOrder.items[index].productId;
-    const newQuantity = increment 
-      ? currentOrder.items[index].quantity + 1 
-      : Math.max(1, currentOrder.items[index].quantity - 1);
+  const handleQuantityChange = (productId: string, newQuantity: number) => {
+    if (newQuantity < 1) {
+      // Ask for confirmation before removing
+      if (confirm('هل تريد إزالة هذا المنتج من الطلب؟')) {
+        removeItemFromOrder(productId);
+      }
+      return;
+    }
     
     updateItemQuantity(productId, newQuantity);
   };
   
-  const handleOpenNoteDialog = (index: number) => {
-    setSelectedItemIndex(index);
-    setItemNote(currentOrder?.items[index].notes || '');
+  const handleProductClick = (product: Product) => {
+    setSelectedProduct(product);
   };
   
-  const handleSaveNote = () => {
-    if (selectedItemIndex !== null && currentOrder) {
-      const updatedItems = [...currentOrder.items];
-      updatedItems[selectedItemIndex] = {
-        ...updatedItems[selectedItemIndex],
-        notes: itemNote
-      };
-      
-      setSelectedItemIndex(null);
-      setItemNote('');
+  const handleProductDialogClose = () => {
+    setSelectedProduct(null);
+    setProductQuantity(1);
+    setNotes('');
+  };
+  
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+  
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+  };
+  
+  const handleQuantityIncrement = () => {
+    setProductQuantity(prev => prev + 1);
+  };
+  
+  const handleQuantityDecrement = () => {
+    if (productQuantity > 1) {
+      setProductQuantity(prev => prev - 1);
     }
   };
   
-  const handlePayment = (method: 'cash' | 'card' | 'other') => {
-    if (!currentOrder || currentOrder.items.length === 0) {
-      toast.error('لا يمكن إتمام طلب فارغ');
-      return;
-    }
-    
-    saveOrder(undefined, undefined, method);
-    
-    if (settings.autoPrintReceipt) {
-      // Mock receipt printing
-      toast.success('جاري طباعة الإيصال...');
-      console.log('Printing receipt for order', currentOrder);
-    }
-    
-    // Reinitialize a new order
+  const handleOrderComplete = () => {
+    // Order successfully processed, reset state
     setTimeout(() => {
       initNewOrder(currentUser?.id || '');
     }, 500);
@@ -177,7 +168,7 @@ const Cashier = () => {
       <Sidebar className="w-64 hidden md:block" />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+        <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-muted/40 px-4 lg:px-6">
           <Sidebar className="lg:hidden" />
           <div className="flex-1">
             <h1 className="text-lg font-semibold">نقطة البيع</h1>
@@ -189,101 +180,85 @@ const Cashier = () => {
           </div>
         </header>
         
-        <main className="flex-1 flex overflow-hidden">
-          {/* Main container */}
-          <div className="flex flex-1 overflow-hidden">
-            {/* Products section (left on desktop) */}
-            <div className="hidden md:flex md:w-2/3 lg:w-3/4 flex-col border-l overflow-hidden">
-              {/* Search bar and category tabs */}
-              <div className="p-4 border-b">
-                <div className="flex items-center space-x-2 mb-4 rtl">
-                  <div className="relative flex-1">
-                    <Search className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      placeholder="بحث عن منتج..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-3 pr-10 rtl"
-                    />
-                  </div>
+        <main className="flex-1 overflow-auto p-4 lg:p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Products Section */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Search and Filters */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="بحث عن منتج..."
+                    className="pl-8"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                  />
                 </div>
-                
-                <ScrollArea className="w-full">
-                  <div className="flex space-x-1 rtl">
-                    <Button
-                      variant={!selectedCategory ? "default" : "outline"}
-                      className="rounded-full"
-                      onClick={() => setSelectedCategory(null)}
-                    >
-                      الكل
-                    </Button>
-                    
-                    {categories.map((category) => (
-                      <Button
-                        key={category}
-                        variant={selectedCategory === category ? "default" : "outline"}
-                        className="rounded-full whitespace-nowrap"
-                        onClick={() => setSelectedCategory(category)}
-                      >
-                        {category}
-                      </Button>
-                    ))}
-                  </div>
-                </ScrollArea>
               </div>
               
-              {/* Products grid */}
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {filteredProducts.length > 0 ? (
-                    filteredProducts.map((product) => (
-                      <Card
-                        key={product.id}
-                        className="h-[180px] overflow-hidden cursor-pointer hover:border-primary transition-colors"
-                        onClick={() => handleAddToOrder(product)}
-                      >
-                        <CardContent className="p-0 h-full flex flex-col">
-                          <div 
-                            className="w-full h-24 bg-muted flex items-center justify-center text-2xl font-bold bg-cover bg-center"
-                            style={product.image ? { backgroundImage: `url(${product.image})` } : {}}
-                          >
-                            {!product.image && product.name.charAt(0)}
-                          </div>
-                          <div className="p-3 flex-1 flex flex-col">
-                            <div className="font-medium rtl line-clamp-1" dir="rtl">
-                              {product.nameAr || product.name}
-                            </div>
-                            <div className="text-primary text-lg font-bold mt-auto">
-                              {settings.currencySymbol}{product.price.toFixed(2)}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))
-                  ) : (
-                    <div className="col-span-full flex items-center justify-center py-8 text-muted-foreground">
-                      لا توجد منتجات مطابقة للبحث
+              {/* Categories */}
+              <div className="flex overflow-auto pb-2 whitespace-nowrap gap-2">
+                {categories.map(category => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? "default" : "outline"}
+                    onClick={() => handleCategoryChange(category)}
+                    className="rounded-full"
+                  >
+                    {category === 'all' ? 'الكل' : category}
+                  </Button>
+                ))}
+              </div>
+              
+              {/* Products Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {filteredProducts.map(product => (
+                  <Card 
+                    key={product.id} 
+                    className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => handleProductClick(product)}
+                  >
+                    <div className="h-24 bg-muted flex items-center justify-center">
+                      {product.imageUrl ? (
+                        <img 
+                          src={product.imageUrl} 
+                          alt={product.name}
+                          className="w-full h-full object-cover" 
+                        />
+                      ) : (
+                        <Tag className="h-12 w-12 text-muted-foreground" />
+                      )}
                     </div>
-                  )}
-                </div>
+                    <CardContent className="p-3">
+                      <h3 className="font-medium text-center truncate">
+                        {product.nameAr || product.name}
+                      </h3>
+                      <p className="text-center text-muted-foreground">
+                        {settings.currencySymbol}{product.price.toFixed(2)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+                
+                {filteredProducts.length === 0 && (
+                  <div className="col-span-full text-center py-12 text-muted-foreground border rounded-lg border-dashed">
+                    لا توجد منتجات متاحة بهذه المواصفات
+                  </div>
+                )}
               </div>
             </div>
             
-            {/* Order section (right on desktop) */}
-            <div className="flex flex-col w-full md:w-1/3 lg:w-1/4 border-l overflow-hidden">
-              <div className="p-4 border-b bg-muted/30">
-                <div className="flex justify-between items-center">
+            {/* Current Order Section - Desktop View */}
+            <div className="hidden lg:flex flex-col h-[calc(100vh-160px)]">
+              <Card className="flex-1 flex flex-col">
+                <CardHeader className="pb-3 flex-row justify-between items-center">
+                  <CardTitle className="flex items-center">
+                    <ShoppingCart className="ml-2 h-5 w-5" />
+                    الطلب الحالي
+                  </CardTitle>
                   <div className="flex items-center">
-                    <ShoppingCart className="h-5 w-5 ml-2" />
-                    <h2 className="font-medium">
-                      {currentOrder?.items.length 
-                        ? `الطلب #${currentOrder.orderNumber}`
-                        : 'طلب جديد'
-                      }
-                    </h2>
-                  </div>
-                  
-                  {currentOrder?.items.length > 0 && (
+                    <span className="text-sm font-medium ml-1">#{currentOrder?.orderNumber}</span>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -292,322 +267,53 @@ const Cashier = () => {
                     >
                       <X className="h-5 w-5" />
                     </Button>
-                  )}
-                </div>
-              </div>
-              
-              {/* Order items */}
-              <ScrollArea className="flex-1">
-                <div className="p-4 space-y-2">
-                  {currentOrder?.items.length ? (
-                    currentOrder.items.map((item, index) => (
-                      <div key={index} className="flex flex-col border rounded-lg p-3">
-                        <div className="flex justify-between">
-                          <div className="font-medium rtl">
-                            {item.product.nameAr || item.product.name}
-                          </div>
-                          <div className="text-primary">
-                            {settings.currencySymbol}{item.product.price.toFixed(2)}
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-between items-center mt-2">
-                          <div className="flex items-center space-x-2 rtl">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7 rounded-full"
-                              onClick={() => handleQuantityChange(index, false)}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            
-                            <span className="w-8 text-center font-medium">{item.quantity}</span>
-                            
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7 rounded-full"
-                              onClick={() => handleQuantityChange(index, true)}
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
-                          
-                          <div className="flex items-center space-x-2 rtl">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleOpenNoteDialog(index)}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                            
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive"
-                              onClick={() => handleRemoveItem(item.productId)}
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        {item.notes && (
-                          <div className="mt-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded-md rtl">
-                            {item.notes}
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      لا توجد منتجات في الطلب
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-              
-              {/* Order summary */}
-              <div className="p-4 border-t bg-card">
-                <div className="space-y-1.5 rtl">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">المجموع</span>
-                    <span>{settings.currencySymbol}{calculateOrderTotal().toFixed(2)}</span>
                   </div>
-                  
-                  {calculateOrderDiscount() > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">الخصم</span>
-                      <span className="text-destructive">
-                        -{settings.currencySymbol}{calculateOrderDiscount().toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-                  
-                  <Separator className="my-2" />
-                  
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>الإجمالي</span>
-                    <span className="text-primary">
-                      {settings.currencySymbol}{calculateFinalAmount().toFixed(2)}
-                    </span>
-                  </div>
-                </div>
+                </CardHeader>
                 
-                <div className="grid grid-cols-2 gap-2 mt-4">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        disabled={!currentOrder?.items.length}
-                      >
-                        <Tag className="ml-2 h-4 w-4" />
-                        خصم
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>تطبيق خصم</DialogTitle>
-                      </DialogHeader>
-                      <div className="py-4">
-                        <p className="text-center text-muted-foreground">
-                          ميزة الخصومات قيد التطوير
-                        </p>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    disabled={!currentOrder?.items.length}
-                    onClick={() => toast('ميزة الطباعة قيد التطوير')}
-                  >
-                    <Printer className="ml-2 h-4 w-4" />
-                    طباعة
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <Button 
-                    onClick={() => handlePayment('cash')}
-                    className="w-full py-6"
-                    disabled={!currentOrder?.items.length}
-                  >
-                    <Banknote className="ml-2 h-5 w-5" />
-                    كاش
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full py-6"
-                    disabled={!currentOrder?.items.length}
-                    onClick={() => handlePayment('card')}
-                  >
-                    <CreditCard className="ml-2 h-5 w-5" />
-                    بطاقة
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Mobile tabs for products and order */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background">
-            <Tabs defaultValue="products">
-              <TabsList className="w-full">
-                <TabsTrigger value="products" className="flex-1">المنتجات</TabsTrigger>
-                <TabsTrigger value="order" className="flex-1">
-                  الطلب 
-                  {currentOrder?.items.length > 0 && (
-                    <Badge className="ml-2" variant="secondary">
-                      {currentOrder.items.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="products" className="h-[calc(100vh-12rem)] overflow-y-auto">
-                <div className="p-4">
-                  <div className="relative mb-4">
-                    <Search className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      placeholder="بحث عن منتج..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-3 pr-10 rtl"
-                    />
-                  </div>
-                  
-                  <ScrollArea className="w-full mb-4">
-                    <div className="flex space-x-1 rtl pb-2">
-                      <Button
-                        variant={!selectedCategory ? "default" : "outline"}
-                        className="rounded-full"
-                        onClick={() => setSelectedCategory(null)}
-                      >
-                        الكل
-                      </Button>
-                      
-                      {categories.map((category) => (
-                        <Button
-                          key={category}
-                          variant={selectedCategory === category ? "default" : "outline"}
-                          className="rounded-full whitespace-nowrap"
-                          onClick={() => setSelectedCategory(category)}
+                <CardContent className="flex-1 overflow-auto">
+                  {currentOrder?.items && currentOrder.items.length > 0 ? (
+                    <div className="space-y-4">
+                      {currentOrder.items.map((item) => (
+                        <div 
+                          key={item.productId} 
+                          className="flex items-center justify-between border-b pb-2"
                         >
-                          {category}
-                        </Button>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    {filteredProducts.length > 0 ? (
-                      filteredProducts.map((product) => (
-                        <Card
-                          key={product.id}
-                          className="h-[140px] overflow-hidden cursor-pointer hover:border-primary transition-colors"
-                          onClick={() => handleAddToOrder(product)}
-                        >
-                          <CardContent className="p-0 h-full flex flex-col">
-                            <div 
-                              className="w-full h-16 bg-muted flex items-center justify-center text-xl font-bold bg-cover bg-center"
-                              style={product.image ? { backgroundImage: `url(${product.image})` } : {}}
-                            >
-                              {!product.image && product.name.charAt(0)}
+                          <div className="flex-1">
+                            <div className="flex justify-between">
+                              <h4 className="font-medium">
+                                {item.product.nameAr || item.product.name}
+                              </h4>
+                              <span className="text-muted-foreground">
+                                {settings.currencySymbol}
+                                {(item.product.price * item.quantity).toFixed(2)}
+                              </span>
                             </div>
-                            <div className="p-2 flex-1 flex flex-col">
-                              <div className="font-medium rtl line-clamp-1 text-sm" dir="rtl">
-                                {product.nameAr || product.name}
-                              </div>
-                              <div className="text-primary text-sm font-bold mt-auto">
-                                {settings.currencySymbol}{product.price.toFixed(2)}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))
-                    ) : (
-                      <div className="col-span-full flex items-center justify-center py-8 text-muted-foreground">
-                        لا توجد منتجات مطابقة للبحث
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </TabsContent>
-              <TabsContent value="order" className="h-[calc(100vh-12rem)] overflow-y-auto">
-                <div className="p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center">
-                      <ShoppingCart className="h-5 w-5 ml-2" />
-                      <h2 className="font-medium">
-                        {currentOrder?.items.length 
-                          ? `الطلب #${currentOrder.orderNumber}`
-                          : 'طلب جديد'
-                        }
-                      </h2>
-                    </div>
-                    
-                    {currentOrder?.items.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive"
-                        onClick={handleCancelOrder}
-                      >
-                        <X className="h-5 w-5" />
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2 mb-4">
-                    {currentOrder?.items.length ? (
-                      currentOrder.items.map((item, index) => (
-                        <div key={index} className="flex flex-col border rounded-lg p-3">
-                          <div className="flex justify-between">
-                            <div className="font-medium rtl">
-                              {item.product.nameAr || item.product.name}
-                            </div>
-                            <div className="text-primary">
-                              {settings.currencySymbol}{item.product.price.toFixed(2)}
-                            </div>
-                          </div>
-                          
-                          <div className="flex justify-between items-center mt-2">
-                            <div className="flex items-center space-x-2 rtl">
+                            
+                            {item.notes && (
+                              <p className="text-sm text-muted-foreground">
+                                {item.notes}
+                              </p>
+                            )}
+                            
+                            <div className="flex items-center mt-1">
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className="h-7 w-7 rounded-full"
-                                onClick={() => handleQuantityChange(index, false)}
+                                className="h-6 w-6 rounded-full"
+                                onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
                               >
                                 <Minus className="h-3 w-3" />
                               </Button>
-                              
-                              <span className="w-8 text-center font-medium">{item.quantity}</span>
-                              
+                              <span className="w-8 text-center">
+                                {item.quantity}
+                              </span>
                               <Button
                                 variant="outline"
                                 size="icon"
-                                className="h-7 w-7 rounded-full"
-                                onClick={() => handleQuantityChange(index, true)}
+                                className="h-6 w-6 rounded-full"
+                                onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
                               >
                                 <Plus className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            
-                            <div className="flex items-center space-x-2 rtl">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => handleOpenNoteDialog(index)}
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
                               </Button>
                               
                               <Button
@@ -620,129 +326,259 @@ const Cashier = () => {
                               </Button>
                             </div>
                           </div>
-                          
-                          {item.notes && (
-                            <div className="mt-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded-md rtl">
-                              {item.notes}
-                            </div>
-                          )}
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8 text-muted-foreground">
-                        لا توجد منتجات في الطلب
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-1.5 rtl mb-4">
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                      <ShoppingCart className="h-12 w-12 mb-2" />
+                      <p>لا توجد منتجات في الطلب الحالي</p>
+                    </div>
+                  )}
+                </CardContent>
+                
+                <CardFooter className="flex-col border-t pt-4">
+                  <div className="w-full space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">المجموع</span>
+                      <span>المجموع:</span>
                       <span>{settings.currencySymbol}{calculateOrderTotal().toFixed(2)}</span>
                     </div>
                     
                     {calculateOrderDiscount() > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">الخصم</span>
-                        <span className="text-destructive">
-                          -{settings.currencySymbol}{calculateOrderDiscount().toFixed(2)}
-                        </span>
+                      <div className="flex justify-between text-green-600">
+                        <span>الخصم:</span>
+                        <span>- {settings.currencySymbol}{calculateOrderDiscount().toFixed(2)}</span>
                       </div>
                     )}
                     
-                    <Separator className="my-2" />
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>الإجمالي:</span>
+                      <span>{settings.currencySymbol}{calculateFinalAmount().toFixed(2)}</span>
+                    </div>
                     
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>الإجمالي</span>
-                      <span className="text-primary">
-                        {settings.currencySymbol}{calculateFinalAmount().toFixed(2)}
-                      </span>
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                      <DiscountDialog 
+                        disabled={!currentOrder || currentOrder.items.length === 0} 
+                      />
+                      
+                      <PaymentDialog 
+                        onComplete={handleOrderComplete}
+                        disabled={!currentOrder || currentOrder.items.length === 0}
+                      />
                     </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          disabled={!currentOrder?.items.length}
+                </CardFooter>
+              </Card>
+            </div>
+            
+            {/* Current Order Section - Mobile View */}
+            <div className="lg:hidden">
+              <Tabs defaultValue="products">
+                <TabsList className="w-full">
+                  <TabsTrigger value="products" className="flex-1">المنتجات</TabsTrigger>
+                  <TabsTrigger value="order" className="flex-1">
+                    الطلب
+                    {currentOrder?.items.length ? (
+                      <Badge className="ml-2" variant="secondary">
+                        {currentOrder.items.length}
+                      </Badge>
+                    ) : null}
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="products">
+                  {/* Product content is already shown outside tabs on mobile */}
+                </TabsContent>
+                
+                <TabsContent value="order">
+                  <Card>
+                    <CardHeader className="pb-3 flex-row justify-between items-center">
+                      <CardTitle className="flex items-center">
+                        <ShoppingCart className="ml-2 h-5 w-5" />
+                        الطلب الحالي
+                      </CardTitle>
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium ml-1">#{currentOrder?.orderNumber}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive"
+                          onClick={handleCancelOrder}
                         >
-                          <Tag className="ml-2 h-4 w-4" />
-                          خصم
+                          <X className="h-5 w-5" />
                         </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>تطبيق خصم</DialogTitle>
-                        </DialogHeader>
-                        <div className="py-4">
-                          <p className="text-center text-muted-foreground">
-                            ميزة الخصومات قيد التطوير
-                          </p>
+                      </div>
+                    </CardHeader>
+                    
+                    <CardContent>
+                      {currentOrder?.items && currentOrder.items.length > 0 ? (
+                        <div className="space-y-4">
+                          {currentOrder.items.map((item) => (
+                            <div 
+                              key={item.productId} 
+                              className="flex items-center justify-between border-b pb-2"
+                            >
+                              <div className="flex-1">
+                                <div className="flex justify-between">
+                                  <h4 className="font-medium">
+                                    {item.product.nameAr || item.product.name}
+                                  </h4>
+                                  <span className="text-muted-foreground">
+                                    {settings.currencySymbol}
+                                    {(item.product.price * item.quantity).toFixed(2)}
+                                  </span>
+                                </div>
+                                
+                                {item.notes && (
+                                  <p className="text-sm text-muted-foreground">
+                                    {item.notes}
+                                  </p>
+                                )}
+                                
+                                <div className="flex items-center mt-1">
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-6 w-6 rounded-full"
+                                    onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="w-8 text-center">
+                                    {item.quantity}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    className="h-6 w-6 rounded-full"
+                                    onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                  
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-destructive"
+                                    onClick={() => handleRemoveItem(item.productId)}
+                                  >
+                                    <Trash className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </DialogContent>
-                    </Dialog>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                          <ShoppingCart className="h-12 w-12 mb-2" />
+                          <p>لا توجد منتجات في الطلب الحالي</p>
+                        </div>
+                      )}
+                    </CardContent>
                     
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      disabled={!currentOrder?.items.length}
-                      onClick={() => toast('ميزة الطباعة قيد التطوير')}
-                    >
-                      <Printer className="ml-2 h-4 w-4" />
-                      طباعة
-                    </Button>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    <Button 
-                      onClick={() => handlePayment('cash')}
-                      className="w-full py-6"
-                      disabled={!currentOrder?.items.length}
-                    >
-                      <Banknote className="ml-2 h-5 w-5" />
-                      كاش
-                    </Button>
-                    
-                    <Button 
-                      variant="outline" 
-                      className="w-full py-6"
-                      disabled={!currentOrder?.items.length}
-                      onClick={() => handlePayment('card')}
-                    >
-                      <CreditCard className="ml-2 h-5 w-5" />
-                      بطاقة
-                    </Button>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
+                    <CardFooter className="flex-col border-t pt-4">
+                      <div className="w-full space-y-2">
+                        <div className="flex justify-between">
+                          <span>المجموع:</span>
+                          <span>{settings.currencySymbol}{calculateOrderTotal().toFixed(2)}</span>
+                        </div>
+                        
+                        {calculateOrderDiscount() > 0 && (
+                          <div className="flex justify-between text-green-600">
+                            <span>الخصم:</span>
+                            <span>- {settings.currencySymbol}{calculateOrderDiscount().toFixed(2)}</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-between font-bold text-lg">
+                          <span>الإجمالي:</span>
+                          <span>{settings.currencySymbol}{calculateFinalAmount().toFixed(2)}</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2 pt-2">
+                          <DiscountDialog 
+                            disabled={!currentOrder || currentOrder.items.length === 0}
+                          />
+                          
+                          <PaymentDialog 
+                            onComplete={handleOrderComplete}
+                            disabled={!currentOrder || currentOrder.items.length === 0}
+                          />
+                        </div>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
         </main>
       </div>
       
-      {/* Item note dialog */}
-      <Dialog open={selectedItemIndex !== null} onOpenChange={(open) => !open && setSelectedItemIndex(null)}>
-        <DialogContent>
+      {/* Product Detail Dialog */}
+      <Dialog open={!!selectedProduct} onOpenChange={(open) => !open && handleProductDialogClose()}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="rtl">إضافة ملاحظة</DialogTitle>
+            <DialogTitle>{selectedProduct?.nameAr || selectedProduct?.name}</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <Input
-              value={itemNote}
-              onChange={(e) => setItemNote(e.target.value)}
-              placeholder="أضف ملاحظة للمنتج..."
-              className="rtl"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setSelectedItemIndex(null)}>
-              إلغاء
-            </Button>
-            <Button onClick={handleSaveNote}>
-              حفظ
-            </Button>
+          
+          <div className="space-y-4 py-4">
+            <div className="flex justify-center">
+              {selectedProduct?.imageUrl ? (
+                <img 
+                  src={selectedProduct.imageUrl} 
+                  alt={selectedProduct.name}
+                  className="w-32 h-32 object-cover rounded-md" 
+                />
+              ) : (
+                <div className="w-32 h-32 bg-muted rounded-md flex items-center justify-center">
+                  <Tag className="h-12 w-12 text-muted-foreground" />
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-center space-x-4 rtl:space-x-reverse">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleQuantityDecrement}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center justify-center w-12 h-10 border rounded-md">
+                {productQuantity}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleQuantityIncrement}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="notes" className="text-sm font-medium block">
+                ملاحظات إضافية
+              </label>
+              <Input
+                id="notes"
+                placeholder="مثال: بدون بصل، حار..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex justify-between items-center border-t pt-4">
+              <div className="font-medium">
+                السعر: {settings.currencySymbol}
+                {selectedProduct ? (productQuantity * selectedProduct.price).toFixed(2) : '0.00'}
+              </div>
+              <Button onClick={handleAddToOrder}>
+                إضافة للطلب
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

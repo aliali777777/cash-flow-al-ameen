@@ -1,7 +1,7 @@
 
 // Import necessary components and types
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Order, OrderItem, OrderStatus, PaymentMethod, Discount } from '@/types';
+import { Order, OrderItem, OrderStatus, PaymentMethod, Discount, KitchenOrderStatus } from '@/types';
 import { getOrders, addOrder, updateOrder, deleteOrder, generateOrderNumber } from '@/utils/storage';
 import { toast } from 'sonner';
 
@@ -17,9 +17,10 @@ interface OrderContextProps {
   getOrder: (orderId: string) => Order | undefined;
   cancelOrder: (orderId: string) => void;
   getActiveKitchenOrders: () => Order[];
-  updateKitchenOrderStatus: (orderId: string, newStatus: string) => void;
+  updateKitchenOrderStatus: (orderId: string, newStatus: KitchenOrderStatus) => void;
   getFilteredOrders: (status?: OrderStatus, dateRange?: { startDate: Date, endDate: Date }) => Order[];
   calculateTotalAmount: (items: OrderItem[]) => number;
+  applyDiscount: (discount: Discount) => void;
 }
 
 const OrderContext = createContext<OrderContextProps | undefined>(undefined);
@@ -83,6 +84,22 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  const applyDiscount = (discount: Discount) => {
+    if (!currentOrder) return;
+    
+    const totalAmount = currentOrder.totalAmount;
+    const discountAmount = calculateDiscountAmount(totalAmount, discount);
+    const finalAmount = totalAmount - discountAmount;
+    
+    setCurrentOrder({
+      ...currentOrder,
+      discount,
+      discountAmount,
+      finalAmount,
+      updatedAt: new Date()
+    });
+  };
+  
   const addItemToOrder = (orderItem: OrderItem) => {
     if (!currentOrder) return;
     
@@ -220,13 +237,13 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
     );
   };
 
-  const updateKitchenOrderStatus = (orderId: string, newStatus: string) => {
+  const updateKitchenOrderStatus = (orderId: string, newStatus: KitchenOrderStatus) => {
     const orderIndex = orders.findIndex(order => order.id === orderId);
     if (orderIndex >= 0) {
       const updatedOrders = [...orders];
       updatedOrders[orderIndex] = {
         ...updatedOrders[orderIndex],
-        kitchenStatus: newStatus as any,
+        kitchenStatus: newStatus,
         updatedAt: new Date()
       };
       
@@ -273,7 +290,8 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
     getActiveKitchenOrders,
     updateKitchenOrderStatus,
     getFilteredOrders,
-    calculateTotalAmount
+    calculateTotalAmount,
+    applyDiscount
   };
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;

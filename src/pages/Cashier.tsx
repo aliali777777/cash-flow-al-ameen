@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/common/Sidebar';
 import { Button } from '@/components/ui/button';
@@ -165,7 +164,7 @@ const Cashier = () => {
                   </div>
                 </div>
                 
-                <ScrollArea className="w-full" orientation="horizontal">
+                <ScrollArea className="w-full">
                   <div className="flex space-x-1 rtl">
                     <Button
                       variant={!selectedCategory ? "default" : "outline"}

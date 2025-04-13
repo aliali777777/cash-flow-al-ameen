@@ -1,12 +1,12 @@
 
-import { User, Product, Order, CashDrawer, Settings, DailySummary } from '../types';
+import { User, Product, Order, CashDrawer, Settings, DailySummary, UserRole } from '../types';
 
 // Default admin user
 const defaultAdmin: User = {
   id: '1',
   username: 'admin',
   password: 'admin',
-  role: 'admin',
+  role: UserRole.ADMIN,
   permissions: [],
   isActive: true,
 };

@@ -18,7 +18,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useAuth } from '@/context/AuthContext';
-import { calculateFinalAmount, generateDailySummary, getOrders, getProducts, getSettings } from '@/utils/storage';
+import { generateDailySummary, getOrders, getProducts, getSettings } from '@/utils/storage';
 import { toast } from 'sonner';
 import { 
   Download,

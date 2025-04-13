@@ -2,13 +2,15 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Search, Tag } from 'lucide-react';
+import { Search, Tag, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Product, Settings } from '@/types';
+import { toast } from 'sonner';
 
 interface ProductListProps {
   products: Product[];
   onProductSelect: (product: Product) => void;
+  onQuickAdd: (product: Product) => void; // إضافة وظيفة جديدة للإضافة السريعة
   settings: Settings;
   searchQuery: string;
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -20,6 +22,7 @@ interface ProductListProps {
 export const ProductList = ({
   products,
   onProductSelect,
+  onQuickAdd,
   settings,
   searchQuery,
   onSearchChange,
@@ -61,10 +64,12 @@ export const ProductList = ({
         {products.map(product => (
           <Card 
             key={product.id} 
-            className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => onProductSelect(product)}
+            className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow relative"
           >
-            <div className="h-24 bg-muted flex items-center justify-center">
+            <div 
+              className="h-24 bg-muted flex items-center justify-center"
+              onClick={() => onProductSelect(product)}
+            >
               {product.imageUrl ? (
                 <img 
                   src={product.imageUrl} 
@@ -76,9 +81,19 @@ export const ProductList = ({
               )}
             </div>
             <CardContent className="p-3">
-              <h3 className="font-medium text-center truncate">
-                {product.nameAr || product.name}
-              </h3>
+              <div className="flex justify-between items-center">
+                <h3 className="font-medium truncate flex-1" onClick={() => onProductSelect(product)}>
+                  {product.nameAr || product.name}
+                </h3>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7 rounded-full bg-primary/10 hover:bg-primary/20"
+                  onClick={() => onQuickAdd(product)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
               <p className="text-center text-muted-foreground">
                 {settings.currencySymbol}{product.price.toFixed(2)}
               </p>

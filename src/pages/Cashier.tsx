@@ -85,6 +85,19 @@ const Cashier = () => {
     
     toast.success('تمت إضافة المنتج للطلب');
   };
+
+  // إضافة وظيفة الإضافة السريعة
+  const handleQuickAdd = (product: Product) => {
+    const orderItem: OrderItem = {
+      productId: product.id,
+      product: product,
+      quantity: 1,
+      notes: undefined
+    };
+    
+    addItemToOrder(orderItem);
+    toast.success('تمت إضافة المنتج للطلب');
+  };
   
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     if (newQuantity < 1) {
@@ -154,6 +167,7 @@ const Cashier = () => {
             <ProductList 
               products={filteredProducts}
               onProductSelect={handleProductClick}
+              onQuickAdd={handleQuickAdd}
               settings={settings}
               searchQuery={searchQuery}
               onSearchChange={handleSearchChange}

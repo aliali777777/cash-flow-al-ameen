@@ -31,6 +31,7 @@ const DEFAULT_SETTINGS: Settings = {
   allowOrderModification: true,
   requireAdminForVoid: true,
   requireAdminForDiscount: true,
+  showPriceOnKitchenDisplay: false,
 };
 
 // Initialize storage with default data
@@ -49,6 +50,7 @@ export const initStorage = () => {
         price: 8.99,
         cost: 3.50,
         isAvailable: true,
+        imageUrl: '/placeholder.svg'
       },
       {
         id: '2',
@@ -58,6 +60,7 @@ export const initStorage = () => {
         price: 9.99,
         cost: 4.00,
         isAvailable: true,
+        imageUrl: '/placeholder.svg'
       },
       {
         id: '3',
@@ -67,6 +70,7 @@ export const initStorage = () => {
         price: 3.99,
         cost: 1.20,
         isAvailable: true,
+        imageUrl: '/placeholder.svg'
       },
       {
         id: '4',
@@ -76,6 +80,7 @@ export const initStorage = () => {
         price: 2.49,
         cost: 0.80,
         isAvailable: true,
+        imageUrl: '/placeholder.svg'
       },
       {
         id: '5',
@@ -85,6 +90,7 @@ export const initStorage = () => {
         price: 1.99,
         cost: 0.30,
         isAvailable: true,
+        imageUrl: '/placeholder.svg'
       },
     ]);
   }

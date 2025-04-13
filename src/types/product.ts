@@ -11,6 +11,7 @@ export interface Product {
   price: number;
   cost: number;
   image?: string;
+  imageUrl?: string;
   description?: string;
   isAvailable: boolean;
 }

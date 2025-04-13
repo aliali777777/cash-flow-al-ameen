@@ -145,6 +145,20 @@ const Settings = () => {
                     </div>
                     
                     <div className="flex items-center justify-between">
+                      <Label htmlFor="showPriceOnKitchenDisplay" className="flex flex-col space-y-1">
+                        <span>عرض الأسعار في شاشة المطبخ</span>
+                        <span className="font-normal text-sm text-muted-foreground">
+                          عرض أسعار المنتجات في شاشة المطبخ
+                        </span>
+                      </Label>
+                      <Switch 
+                        id="showPriceOnKitchenDisplay"
+                        checked={settings.showPriceOnKitchenDisplay || false}
+                        onCheckedChange={(checked) => handleChange('showPriceOnKitchenDisplay', checked)}
+                      />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
                       <Label htmlFor="language" className="flex flex-col space-y-1">
                         <span>لغة البرنامج</span>
                         <span className="font-normal text-sm text-muted-foreground">

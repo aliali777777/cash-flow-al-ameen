@@ -17,4 +17,5 @@ export interface Settings {
   requireAdminForDiscount: boolean;
   receiptPrinter?: string;
   kitchenPrinter?: string;
+  showPriceOnKitchenDisplay?: boolean;
 }

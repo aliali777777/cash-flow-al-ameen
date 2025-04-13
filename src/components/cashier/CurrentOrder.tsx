@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, X, Plus, Minus, Trash } from 'lucide-react';
-import { Settings, Order, OrderItem } from '@/types';
+import { Settings, type Order, type OrderItem } from '@/types';
 import { PaymentDialog } from '@/components/order/PaymentDialog';
 import { DiscountDialog } from '@/components/order/DiscountDialog';
 

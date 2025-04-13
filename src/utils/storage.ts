@@ -1,16 +1,18 @@
-
-import { User, Product, Order, UserRole, Settings, PERMISSIONS } from '../types';
+import { User, Product, Order, UserRole, Settings, PERMISSIONS, Permission } from '../types';
 
 // Default admin user
 const DEFAULT_ADMIN: User = {
   id: '1',
   username: 'admin',
   password: 'admin',
-  name: 'مدير النظام',
   role: UserRole.ADMIN,
-  permissions: Object.values(PERMISSIONS).map(id => ({ id, checked: true })),
+  permissions: Object.values(PERMISSIONS).map(id => ({ 
+    id, 
+    name: id,
+    description: `Permission to ${id.replace(/_/g, ' ')}`,
+    checked: true 
+  })),
   isActive: true,
-  createdAt: new Date(),
 };
 
 // Default settings
@@ -26,6 +28,9 @@ const DEFAULT_SETTINGS: Settings = {
   showLogo: true,
   taxRate: 0,
   receiptFooter: 'شكراً لزيارتكم',
+  allowOrderModification: true,
+  requireAdminForVoid: true,
+  requireAdminForDiscount: true,
 };
 
 // Initialize storage with default data

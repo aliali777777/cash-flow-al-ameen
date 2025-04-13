@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/common/Sidebar';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge'; // Import the Badge component instead of creating our own
 import {
   Table,
   TableBody,
@@ -399,15 +399,6 @@ const Products = () => {
         </Dialog>
       </div>
     </div>
-  );
-};
-
-// Import needed for the Badge component used in the table
-const Badge = ({ className, variant, children }: { className?: string; variant?: string; children: React.ReactNode }) => {
-  return (
-    <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium", className)}>
-      {children}
-    </span>
   );
 };
 

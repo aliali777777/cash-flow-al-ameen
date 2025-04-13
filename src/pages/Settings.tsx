@@ -26,7 +26,7 @@ import {
 
 const Settings = () => {
   const { hasPermission } = useAuth();
-  const canManageSettings = hasPermission(PERMISSIONS.MANAGE_SETTINGS);
+  const canManageSettings = hasPermission(PERMISSIONS.MANAGE_SETTINGS); // Now using the correct permission
   
   const [settings, setSettings] = useState(getSettings());
   
@@ -139,7 +139,7 @@ const Settings = () => {
                       </Label>
                       <Switch 
                         id="autoKitchenPrint"
-                        checked={settings.autoKitchenPrint}
+                        checked={settings.autoKitchenPrint || false}
                         onCheckedChange={(checked) => handleChange('autoKitchenPrint', checked)}
                       />
                     </div>
@@ -240,7 +240,7 @@ const Settings = () => {
                       </Label>
                       <Switch 
                         id="showLogo"
-                        checked={settings.showLogo}
+                        checked={settings.showLogo || false}
                         onCheckedChange={(checked) => handleChange('showLogo', checked)}
                       />
                     </div>

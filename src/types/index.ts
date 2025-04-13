@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   username: string;
@@ -32,6 +31,7 @@ export const PERMISSIONS = {
   CLOSE_REGISTER: 'close_register',
   KITCHEN_DISPLAY: 'kitchen_display',
   ACCESS_SETTINGS: 'access_settings',
+  MANAGE_SETTINGS: 'manage_settings',
 };
 
 export interface Product {
@@ -129,6 +129,8 @@ export interface Settings {
   language: 'ar' | 'en';
   businessName: string;
   businessNameAr?: string;
+  businessAddress?: string;
+  businessPhone?: string;
   logoUrl?: string;
   receiptFooter?: string;
   receiptFooterAr?: string;
@@ -139,6 +141,11 @@ export interface Settings {
   requireAdminForVoid: boolean;
   requireAdminForDiscount: boolean;
   autoPrintReceipt: boolean;
-  showPriceOnKitchenDisplay: boolean;
-  kitchenDisplayTimeout: number;
+  autoKitchenPrint?: boolean;
+  showPriceOnKitchenDisplay?: boolean;
+  kitchenDisplayTimeout?: number;
+  receiptPrinter?: string;
+  kitchenPrinter?: string;
+  receiptWidth?: number;
+  showLogo?: boolean;
 }

@@ -1,96 +1,73 @@
 
+// Import necessary components and types
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Order, OrderItem, Product, OrderStatus, KitchenOrderStatus, PaymentMethod, Discount } from '../types';
-import { addOrder, updateOrder, getOrders, generateOrderNumber } from '../utils/storage';
-import { useAuth } from './AuthContext';
+import { Order, OrderItem, OrderStatus, PaymentMethod, Discount } from '@/types';
+import { getOrders, addOrder, updateOrder, deleteOrder, generateOrderNumber } from '@/utils/storage';
 import { toast } from 'sonner';
 
-interface OrderContextType {
+interface OrderContextProps {
+  orders: Order[];
   currentOrder: Order | null;
-  todaysOrders: Order[];
-  kitchenOrders: Order[];
-  initializeOrder: () => void;
-  addItemToOrder: (product: Product, quantity: number, notes?: string) => void;
-  removeItemFromOrder: (index: number) => void;
-  updateItemQuantity: (index: number, quantity: number) => void;
-  updateItemNotes: (index: number, notes: string) => void;
-  applyDiscount: (discount: Discount | undefined) => void;
-  completeOrder: (paymentMethod: PaymentMethod) => void;
-  cancelOrder: () => void;
-  voidOrder: (orderId: string, reason: string) => void;
-  updateKitchenStatus: (orderId: string, status: KitchenOrderStatus, preparationTime?: number) => void;
-  markOrderAsDelivered: (orderId: string) => void;
+  initNewOrder: (cashierId: string) => void;
+  addItemToOrder: (orderItem: OrderItem) => void;
+  removeItemFromOrder: (productId: string) => void;
+  updateItemQuantity: (productId: string, quantity: number) => void;
   clearCurrentOrder: () => void;
-  calculateOrderTotal: () => number;
-  calculateOrderDiscount: () => number;
-  calculateFinalAmount: () => number;
+  saveOrder: (customerName?: string, notes?: string, paymentMethod?: PaymentMethod) => Order;
+  getOrder: (orderId: string) => Order | undefined;
+  cancelOrder: (orderId: string) => void;
+  getActiveKitchenOrders: () => Order[];
+  updateKitchenOrderStatus: (orderId: string, newStatus: string) => void;
+  getFilteredOrders: (status?: OrderStatus, dateRange?: { startDate: Date, endDate: Date }) => Order[];
+  calculateTotalAmount: (items: OrderItem[]) => number;
 }
 
-const OrderContext = createContext<OrderContextType>({
-  currentOrder: null,
-  todaysOrders: [],
-  kitchenOrders: [],
-  initializeOrder: () => {},
-  addItemToOrder: () => {},
-  removeItemFromOrder: () => {},
-  updateItemQuantity: () => {},
-  updateItemNotes: () => {},
-  applyDiscount: () => {},
-  completeOrder: () => {},
-  cancelOrder: () => {},
-  voidOrder: () => {},
-  updateKitchenStatus: () => {},
-  markOrderAsDelivered: () => {},
-  clearCurrentOrder: () => {},
-  calculateOrderTotal: () => 0,
-  calculateOrderDiscount: () => 0,
-  calculateFinalAmount: () => 0,
-});
+const OrderContext = createContext<OrderContextProps | undefined>(undefined);
 
-export const useOrders = () => useContext(OrderContext);
+export const useOrder = () => {
+  const context = useContext(OrderContext);
+  if (!context) {
+    throw new Error('useOrder must be used within an OrderProvider');
+  }
+  return context;
+};
 
-export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
-  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
 
+  // Load orders from storage on mount
   useEffect(() => {
-    // Load orders from storage
-    try {
-      const storedOrders = getOrders();
-      setOrders(storedOrders);
-    } catch (error) {
-      console.error('Failed to load orders:', error);
-      toast.error('Failed to load orders');
-    }
+    setOrders(getOrders());
   }, []);
 
-  // Filter today's orders
-  const todaysOrders = orders.filter(order => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const orderDate = new Date(order.createdAt);
-    orderDate.setHours(0, 0, 0, 0);
-    
-    return orderDate.getTime() === today.getTime();
-  });
+  const calculateTotalAmount = (items: OrderItem[]): number => {
+    return items.reduce((total, item) => {
+      const itemTotal = item.product.price * item.quantity;
+      const modifiersTotal = item.modifiers 
+        ? item.modifiers.reduce((modTotal, mod) => modTotal + mod.price, 0) * item.quantity 
+        : 0;
+      return total + itemTotal + modifiersTotal;
+    }, 0);
+  };
 
-  // Filter orders for kitchen display (new and in-progress)
-  const kitchenOrders = orders.filter(order => 
-    (order.status === 'pending' || order.status === 'completed') && 
-    (order.kitchenStatus === 'new' || order.kitchenStatus === 'in-progress') &&
-    !order.isVoided
-  );
-
-  const initializeOrder = () => {
-    if (!currentUser) {
-      toast.error('No user logged in');
-      return;
+  const calculateDiscountAmount = (totalAmount: number, discount: Discount | undefined): number => {
+    if (!discount) return 0;
+    
+    if (discount.type === 'percentage') {
+      return (totalAmount * discount.value) / 100;
+    } else if (discount.type === 'fixed') {
+      return discount.value;
     }
+    
+    return 0;
+  };
 
-    const newOrder: Order = {
-      id: Date.now().toString(),
+  const initNewOrder = (cashierId: string) => {
+    const orderNumber = Number(generateOrderNumber().split('-')[1]);
+    
+    setCurrentOrder({
+      id: `order-${Date.now()}`,
       items: [],
       totalAmount: 0,
       discountAmount: 0,
@@ -98,344 +75,206 @@ export const OrderProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       status: 'pending',
       createdAt: new Date(),
       updatedAt: new Date(),
-      orderNumber: generateOrderNumber(),
-      cashierId: currentUser.id,
+      orderNumber, // Fixed: Using Number to ensure correct type
+      cashierId,
       paymentMethod: 'cash',
       isPaid: false,
-      kitchenStatus: 'new',
-    };
-
-    setCurrentOrder(newOrder);
-  };
-
-  const addItemToOrder = (product: Product, quantity: number, notes?: string) => {
-    if (!currentOrder) {
-      toast.error('No active order');
-      return;
-    }
-
-    const newItem: OrderItem = {
-      productId: product.id,
-      product,
-      quantity,
-      notes,
-    };
-
-    setCurrentOrder(prev => {
-      if (!prev) return null;
-      
-      const updatedItems = [...prev.items, newItem];
-      
-      return {
-        ...prev,
-        items: updatedItems,
-        updatedAt: new Date(),
-      };
+      kitchenStatus: 'new'
     });
   };
 
-  const removeItemFromOrder = (index: number) => {
+  const addItemToOrder = (orderItem: OrderItem) => {
     if (!currentOrder) return;
-
-    setCurrentOrder(prev => {
-      if (!prev) return null;
-      
-      const updatedItems = [...prev.items];
-      updatedItems.splice(index, 1);
-      
-      return {
-        ...prev,
-        items: updatedItems,
-        updatedAt: new Date(),
-      };
-    });
-  };
-
-  const updateItemQuantity = (index: number, quantity: number) => {
-    if (!currentOrder) return;
-
-    setCurrentOrder(prev => {
-      if (!prev) return null;
-      
-      const updatedItems = [...prev.items];
-      if (updatedItems[index]) {
-        updatedItems[index] = {
-          ...updatedItems[index],
-          quantity,
-        };
-      }
-      
-      return {
-        ...prev,
-        items: updatedItems,
-        updatedAt: new Date(),
-      };
-    });
-  };
-
-  const updateItemNotes = (index: number, notes: string) => {
-    if (!currentOrder) return;
-
-    setCurrentOrder(prev => {
-      if (!prev) return null;
-      
-      const updatedItems = [...prev.items];
-      if (updatedItems[index]) {
-        updatedItems[index] = {
-          ...updatedItems[index],
-          notes,
-        };
-      }
-      
-      return {
-        ...prev,
-        items: updatedItems,
-        updatedAt: new Date(),
-      };
-    });
-  };
-
-  const applyDiscount = (discount: Discount | undefined) => {
-    if (!currentOrder) return;
-
-    setCurrentOrder(prev => {
-      if (!prev) return null;
-      
-      return {
-        ...prev,
-        discount,
-        updatedAt: new Date(),
-      };
-    });
-  };
-
-  const calculateOrderTotal = (): number => {
-    if (!currentOrder) return 0;
     
-    return currentOrder.items.reduce((total, item) => {
-      return total + (item.product.price * item.quantity);
-    }, 0);
-  };
-
-  const calculateOrderDiscount = (): number => {
-    if (!currentOrder || !currentOrder.discount) return 0;
+    const existingItemIndex = currentOrder.items.findIndex(
+      item => item.productId === orderItem.productId
+    );
     
-    const total = calculateOrderTotal();
-    const discount = currentOrder.discount;
+    let updatedItems;
     
-    if (discount.type === 'fixed') {
-      return discount.value;
-    } else if (discount.type === 'percentage') {
-      return (total * discount.value) / 100;
-    } else if (discount.type === 'buyXgetY' && discount.buyCount && discount.getFreeCount) {
-      // Handle buy X get Y free discount
-      let discountAmount = 0;
-      
-      // If there are specific products this discount applies to
-      if (discount.applicableProductIds && discount.applicableProductIds.length > 0) {
-        const applicableItems = currentOrder.items.filter(item => 
-          discount.applicableProductIds?.includes(item.product.id)
-        );
-        
-        applicableItems.forEach(item => {
-          const totalQuantity = item.quantity;
-          const discountCycles = Math.floor(totalQuantity / (discount.buyCount! + discount.getFreeCount!));
-          const freeItems = discountCycles * discount.getFreeCount!;
-          discountAmount += freeItems * item.product.price;
-        });
-      } else {
-        // Apply to all products
-        const flatItems: { product: Product, quantity: number }[] = [];
-        
-        // Flatten all items by product
-        currentOrder.items.forEach(item => {
-          const existing = flatItems.find(i => i.product.id === item.product.id);
-          if (existing) {
-            existing.quantity += item.quantity;
-          } else {
-            flatItems.push({ product: item.product, quantity: item.quantity });
-          }
-        });
-        
-        // Sort by price descending to apply discount to cheapest items
-        flatItems.sort((a, b) => a.product.price - b.product.price);
-        
-        // Calculate discount
-        const totalQuantity = flatItems.reduce((sum, item) => sum + item.quantity, 0);
-        const discountCycles = Math.floor(totalQuantity / (discount.buyCount! + discount.getFreeCount!));
-        
-        let remainingDiscounts = discountCycles * discount.getFreeCount!;
-        
-        for (const item of flatItems) {
-          if (remainingDiscounts <= 0) break;
-          
-          const itemsToDiscount = Math.min(remainingDiscounts, item.quantity);
-          discountAmount += itemsToDiscount * item.product.price;
-          remainingDiscounts -= itemsToDiscount;
-        }
-      }
-      
-      return discountAmount;
+    if (existingItemIndex >= 0) {
+      // Increment quantity if the item already exists
+      updatedItems = [...currentOrder.items];
+      updatedItems[existingItemIndex].quantity += orderItem.quantity;
+    } else {
+      // Add new item
+      updatedItems = [...currentOrder.items, orderItem];
     }
     
-    return 0;
-  };
-
-  const calculateFinalAmount = (): number => {
-    const total = calculateOrderTotal();
-    const discountAmount = calculateOrderDiscount();
-    return Math.max(0, total - discountAmount);
-  };
-
-  const completeOrder = (paymentMethod: PaymentMethod) => {
-    if (!currentOrder || currentOrder.items.length === 0) {
-      toast.error('Cannot complete an empty order');
-      return;
-    }
-
-    const totalAmount = calculateOrderTotal();
-    const discountAmount = calculateOrderDiscount();
-    const finalAmount = calculateFinalAmount();
-
-    const completedOrder: Order = {
+    const totalAmount = calculateTotalAmount(updatedItems);
+    const discountAmount = calculateDiscountAmount(totalAmount, currentOrder.discount);
+    const finalAmount = totalAmount - discountAmount;
+    
+    setCurrentOrder({
       ...currentOrder,
+      items: updatedItems,
       totalAmount,
       discountAmount,
       finalAmount,
-      status: 'completed',
-      paymentMethod,
-      isPaid: true,
-      updatedAt: new Date(),
-    };
-
-    // Save the order to storage
-    addOrder(completedOrder);
-    
-    // Update local state
-    setOrders(prev => [...prev, completedOrder]);
-    
-    // Clear current order
-    setCurrentOrder(null);
-    
-    toast.success('Order completed successfully');
+      updatedAt: new Date()
+    });
   };
 
-  const cancelOrder = () => {
+  const removeItemFromOrder = (productId: string) => {
     if (!currentOrder) return;
     
-    setCurrentOrder(null);
-    toast.info('Order has been canceled');
+    const updatedItems = currentOrder.items.filter(item => item.productId !== productId);
+    const totalAmount = calculateTotalAmount(updatedItems);
+    const discountAmount = calculateDiscountAmount(totalAmount, currentOrder.discount);
+    const finalAmount = totalAmount - discountAmount;
+    
+    setCurrentOrder({
+      ...currentOrder,
+      items: updatedItems,
+      totalAmount,
+      discountAmount,
+      finalAmount,
+      updatedAt: new Date()
+    });
   };
 
-  const voidOrder = (orderId: string, reason: string) => {
-    const orderToVoid = orders.find(order => order.id === orderId);
+  const updateItemQuantity = (productId: string, quantity: number) => {
+    if (!currentOrder) return;
     
-    if (!orderToVoid) {
-      toast.error('Order not found');
-      return;
-    }
+    const updatedItems = currentOrder.items.map(item => {
+      if (item.productId === productId) {
+        return { ...item, quantity };
+      }
+      return item;
+    });
     
-    const voidedOrder: Order = {
-      ...orderToVoid,
-      isVoided: true,
-      notes: orderToVoid.notes 
-        ? `${orderToVoid.notes}\nVoided: ${reason}` 
-        : `Voided: ${reason}`,
-      updatedAt: new Date(),
-    };
+    const totalAmount = calculateTotalAmount(updatedItems);
+    const discountAmount = calculateDiscountAmount(totalAmount, currentOrder.discount);
+    const finalAmount = totalAmount - discountAmount;
     
-    // Update the order in storage
-    updateOrder(voidedOrder);
-    
-    // Update local state
-    setOrders(prev => prev.map(o => o.id === orderId ? voidedOrder : o));
-    
-    toast.success('Order has been voided');
-  };
-
-  const updateKitchenStatus = (orderId: string, status: KitchenOrderStatus, preparationTime?: number) => {
-    const orderToUpdate = orders.find(order => order.id === orderId);
-    
-    if (!orderToUpdate) {
-      toast.error('Order not found');
-      return;
-    }
-    
-    let estimatedCompletionTime: Date | undefined = undefined;
-    
-    if (status === 'in-progress' && preparationTime) {
-      estimatedCompletionTime = new Date();
-      estimatedCompletionTime.setMinutes(estimatedCompletionTime.getMinutes() + preparationTime);
-    }
-    
-    const updatedOrder: Order = {
-      ...orderToUpdate,
-      kitchenStatus: status,
-      preparationTime,
-      estimatedCompletionTime,
-      updatedAt: new Date(),
-    };
-    
-    // Update the order in storage
-    updateOrder(updatedOrder);
-    
-    // Update local state
-    setOrders(prev => prev.map(o => o.id === orderId ? updatedOrder : o));
-    
-    toast.success(`Kitchen status updated to ${status}`);
-  };
-
-  const markOrderAsDelivered = (orderId: string) => {
-    const orderToUpdate = orders.find(order => order.id === orderId);
-    
-    if (!orderToUpdate) {
-      toast.error('Order not found');
-      return;
-    }
-    
-    const updatedOrder: Order = {
-      ...orderToUpdate,
-      kitchenStatus: 'delivered',
-      updatedAt: new Date(),
-    };
-    
-    // Update the order in storage
-    updateOrder(updatedOrder);
-    
-    // Update local state
-    setOrders(prev => prev.map(o => o.id === orderId ? updatedOrder : o));
-    
-    toast.success('Order marked as delivered');
+    setCurrentOrder({
+      ...currentOrder,
+      items: updatedItems,
+      totalAmount,
+      discountAmount,
+      finalAmount,
+      updatedAt: new Date()
+    });
   };
 
   const clearCurrentOrder = () => {
     setCurrentOrder(null);
   };
 
-  return (
-    <OrderContext.Provider
-      value={{
-        currentOrder,
-        todaysOrders,
-        kitchenOrders,
-        initializeOrder,
-        addItemToOrder,
-        removeItemFromOrder,
-        updateItemQuantity,
-        updateItemNotes,
-        applyDiscount,
-        completeOrder,
-        cancelOrder,
-        voidOrder,
-        updateKitchenStatus,
-        markOrderAsDelivered,
-        clearCurrentOrder,
-        calculateOrderTotal,
-        calculateOrderDiscount,
-        calculateFinalAmount,
-      }}
-    >
-      {children}
-    </OrderContext.Provider>
-  );
+  const saveOrder = (customerName?: string, notes?: string, paymentMethod: PaymentMethod = 'cash') => {
+    if (!currentOrder) {
+      throw new Error('No current order to save');
+    }
+    
+    const finalOrder: Order = {
+      ...currentOrder,
+      customerName,
+      notes,
+      paymentMethod,
+      updatedAt: new Date()
+    };
+    
+    const existingOrderIndex = orders.findIndex(o => o.id === finalOrder.id);
+    
+    if (existingOrderIndex >= 0) {
+      // Update existing order
+      const updatedOrders = [...orders];
+      updatedOrders[existingOrderIndex] = finalOrder;
+      setOrders(updatedOrders);
+      updateOrder(finalOrder);
+    } else {
+      // Add new order
+      setOrders([...orders, finalOrder]);
+      addOrder(finalOrder);
+    }
+    
+    setCurrentOrder(null);
+    return finalOrder;
+  };
+
+  const getOrder = (orderId: string) => {
+    return orders.find(order => order.id === orderId);
+  };
+
+  const cancelOrder = (orderId: string) => {
+    const orderIndex = orders.findIndex(order => order.id === orderId);
+    if (orderIndex >= 0) {
+      const updatedOrders = [...orders];
+      updatedOrders[orderIndex] = {
+        ...updatedOrders[orderIndex],
+        status: 'canceled',
+        updatedAt: new Date()
+      };
+      
+      setOrders(updatedOrders);
+      updateOrder(updatedOrders[orderIndex]);
+      
+      toast.success('تم إلغاء الطلب بنجاح');
+    }
+  };
+
+  const getActiveKitchenOrders = () => {
+    return orders.filter(
+      order => order.status === 'pending' && 
+      ['new', 'in-progress'].includes(order.kitchenStatus || '')
+    );
+  };
+
+  const updateKitchenOrderStatus = (orderId: string, newStatus: string) => {
+    const orderIndex = orders.findIndex(order => order.id === orderId);
+    if (orderIndex >= 0) {
+      const updatedOrders = [...orders];
+      updatedOrders[orderIndex] = {
+        ...updatedOrders[orderIndex],
+        kitchenStatus: newStatus as any,
+        updatedAt: new Date()
+      };
+      
+      // If marked as ready, calculate estimated completion time
+      if (newStatus === 'ready') {
+        updatedOrders[orderIndex].estimatedCompletionTime = new Date();
+      }
+      
+      setOrders(updatedOrders);
+      updateOrder(updatedOrders[orderIndex]);
+    }
+  };
+
+  const getFilteredOrders = (
+    status?: OrderStatus, 
+    dateRange?: { startDate: Date, endDate: Date }
+  ) => {
+    return orders.filter(order => {
+      // Filter by status if provided
+      const statusMatches = !status || order.status === status;
+      
+      // Filter by date range if provided
+      let dateMatches = true;
+      if (dateRange) {
+        const orderDate = new Date(order.createdAt);
+        dateMatches = orderDate >= dateRange.startDate && orderDate <= dateRange.endDate;
+      }
+      
+      return statusMatches && dateMatches;
+    });
+  };
+
+  const value = {
+    orders,
+    currentOrder,
+    initNewOrder,
+    addItemToOrder,
+    removeItemFromOrder,
+    updateItemQuantity,
+    clearCurrentOrder,
+    saveOrder,
+    getOrder,
+    cancelOrder,
+    getActiveKitchenOrders,
+    updateKitchenOrderStatus,
+    getFilteredOrders,
+    calculateTotalAmount
+  };
+
+  return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;
 };

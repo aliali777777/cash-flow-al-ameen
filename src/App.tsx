@@ -16,6 +16,7 @@ import Cashier from "./pages/Cashier";
 import Kitchen from "./pages/Kitchen";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
+import Index from "./pages/Index";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,11 @@ const App = () => (
                 
                 <Route 
                   path="/" 
+                  element={<Index />} 
+                />
+                
+                <Route 
+                  path="/cashier" 
                   element={
                     <ProtectedRoute>
                       <Cashier />

@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 const Index = () => {
   const { isAuthenticated, currentUser } = useAuth();
@@ -16,10 +17,13 @@ const Index = () => {
     // Redirect based on user role
     if (currentUser?.role === 'admin') {
       navigate('/admin');
+      toast.success(`مرحباً ${currentUser.username}، تم تسجيل الدخول بنجاح`);
     } else if (currentUser?.role === 'kitchen') {
       navigate('/kitchen');
+      toast.success(`مرحباً ${currentUser.username}، تم تسجيل الدخول بنجاح`);
     } else {
-      navigate('/'); // Cashier is the default view
+      navigate('/cashier');
+      toast.success(`مرحباً ${currentUser.username}، تم تسجيل الدخول بنجاح`);
     }
   }, [isAuthenticated, currentUser, navigate]);
   

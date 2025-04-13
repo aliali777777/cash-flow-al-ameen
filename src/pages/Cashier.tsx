@@ -25,7 +25,6 @@ import { useOrder } from '@/context/OrderContext';
 import { useAuth } from '@/context/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Product, OrderItem, PERMISSIONS } from '@/types';
-import { cn } from '@/lib/utils';
 import { getSettings } from '@/utils/storage';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -68,6 +67,22 @@ const Cashier = () => {
     
     return matchesSearch && matchesCategory;
   });
+  
+  // Helper functions for order calculations
+  const calculateOrderTotal = () => {
+    if (!currentOrder) return 0;
+    return currentOrder.totalAmount;
+  };
+
+  const calculateOrderDiscount = () => {
+    if (!currentOrder) return 0;
+    return currentOrder.discountAmount;
+  };
+
+  const calculateFinalAmount = () => {
+    if (!currentOrder) return 0;
+    return currentOrder.finalAmount;
+  };
   
   // Handle order initialization if needed
   React.useEffect(() => {
@@ -145,6 +160,16 @@ const Cashier = () => {
     setTimeout(() => {
       initNewOrder(currentUser?.id || '');
     }, 500);
+  };
+
+  const handleRemoveItem = (productId: string) => {
+    removeItemFromOrder(productId);
+  };
+
+  const handleCancelOrder = () => {
+    if (confirm('هل أنت متأكد من إلغاء الطلب الحالي؟')) {
+      clearCurrentOrder();
+    }
   };
   
   return (
@@ -263,11 +288,7 @@ const Cashier = () => {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-destructive"
-                      onClick={() => {
-                        if (confirm('هل أنت متأكد من إلغاء الطلب الحالي؟')) {
-                          cancelOrder();
-                        }
-                      }}
+                      onClick={handleCancelOrder}
                     >
                       <X className="h-5 w-5" />
                     </Button>
@@ -327,7 +348,7 @@ const Cashier = () => {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-destructive"
-                              onClick={() => removeItemFromOrder(index)}
+                              onClick={() => handleRemoveItem(item.productId)}
                             >
                               <Trash className="h-4 w-4" />
                             </Button>
@@ -536,11 +557,7 @@ const Cashier = () => {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive"
-                        onClick={() => {
-                          if (confirm('هل أنت متأكد من إلغاء الطلب الحالي؟')) {
-                            cancelOrder();
-                          }
-                        }}
+                        onClick={handleCancelOrder}
                       >
                         <X className="h-5 w-5" />
                       </Button>
@@ -597,7 +614,7 @@ const Cashier = () => {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-destructive"
-                                onClick={() => removeItemFromOrder(index)}
+                                onClick={() => handleRemoveItem(item.productId)}
                               >
                                 <Trash className="h-4 w-4" />
                               </Button>

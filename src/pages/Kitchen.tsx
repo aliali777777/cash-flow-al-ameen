@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useOrder } from '@/context/OrderContext';
 import { Sidebar } from '@/components/common/Sidebar';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { getSettings } from '@/utils/storage';
 import { Clock, CheckCircle2, X, AlertCircle } from 'lucide-react';
 import { KitchenOrderStatus, Order } from '@/types';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const Kitchen = () => {
   const { orders, getActiveKitchenOrders, updateKitchenOrderStatus } = useOrder();
@@ -17,9 +19,18 @@ const Kitchen = () => {
   
   // State for preparation time
   const [prepTimes, setPrepTimes] = useState<Record<string, number>>({});
+  const [kitchenOrders, setKitchenOrders] = useState<Order[]>([]);
   
-  // Get active kitchen orders
-  const kitchenOrders = getActiveKitchenOrders();
+  // Initialize kitchen orders
+  useEffect(() => {
+    refreshOrders();
+  }, [orders]);
+  
+  const refreshOrders = () => {
+    // Get active kitchen orders
+    const activeOrders = getActiveKitchenOrders();
+    setKitchenOrders(activeOrders);
+  };
   
   // Group orders by status
   const newOrders = kitchenOrders.filter(order => order.kitchenStatus === 'new');
@@ -28,6 +39,28 @@ const Kitchen = () => {
   
   const handleStatusChange = (order: Order, newStatus: KitchenOrderStatus) => {
     updateKitchenOrderStatus(order.id, newStatus);
+    
+    // Update the status in the local state immediately
+    setKitchenOrders(prev => 
+      prev.map(o => {
+        if (o.id === order.id) {
+          return { ...o, kitchenStatus: newStatus };
+        }
+        return o;
+      })
+    );
+    
+    // Show toast message
+    if (newStatus === 'in-progress') {
+      toast.success('تم بدء تحضير الطلب');
+    } else if (newStatus === 'ready') {
+      toast.success('تم تحضير الطلب بنجاح');
+    } else if (newStatus === 'delivered') {
+      toast.success('تم تسليم الطلب بنجاح');
+    }
+    
+    // Refresh orders from context after a short delay
+    setTimeout(refreshOrders, 300);
   };
   
   const handlePrepTimeChange = (orderId: string, minutes: number) => {
@@ -35,11 +68,40 @@ const Kitchen = () => {
       ...prev,
       [orderId]: minutes
     }));
+    
+    // Calculate the estimated completion time
+    const completionTime = new Date();
+    completionTime.setMinutes(completionTime.getMinutes() + minutes);
+    
+    // Update the order with the estimated completion time
+    const orderToUpdate = kitchenOrders.find(o => o.id === orderId);
+    if (orderToUpdate) {
+      const updatedOrder = {
+        ...orderToUpdate,
+        estimatedCompletionTime: completionTime
+      };
+      
+      // Update the order in the local state
+      setKitchenOrders(prev => 
+        prev.map(o => {
+          if (o.id === orderId) {
+            return updatedOrder;
+          }
+          return o;
+        })
+      );
+    }
   };
   
   const markOrderAsDelivered = (orderId: string) => {
     // Mark the order as delivered by updating its status
     updateKitchenOrderStatus(orderId, 'delivered');
+    
+    // Update the local state
+    setKitchenOrders(prev => prev.filter(o => o.id !== orderId));
+    
+    // Show toast
+    toast.success('تم تسليم الطلب بنجاح');
   };
   
   // Calculate remaining time
@@ -55,6 +117,27 @@ const Kitchen = () => {
     const diffInMinutes = Math.ceil(diffInMs / (1000 * 60));
     return `${diffInMinutes} دقيقة`;
   };
+  
+  // Check for orders that have completed their prep time
+  useEffect(() => {
+    const checkCompletionTimes = () => {
+      const now = new Date();
+      
+      inProgressOrders.forEach(order => {
+        if (order.estimatedCompletionTime) {
+          const completionTime = new Date(order.estimatedCompletionTime);
+          if (now >= completionTime && order.kitchenStatus === 'in-progress') {
+            // Time's up, mark as ready
+            handleStatusChange(order, 'ready');
+          }
+        }
+      });
+    };
+    
+    // Check every 10 seconds
+    const interval = setInterval(checkCompletionTimes, 10000);
+    return () => clearInterval(interval);
+  }, [inProgressOrders]);
   
   return (
     <div className="flex h-screen">
@@ -323,3 +406,4 @@ const Kitchen = () => {
 };
 
 export default Kitchen;
+

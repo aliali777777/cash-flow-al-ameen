@@ -1,4 +1,3 @@
-
 // Import necessary components and types
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Order, OrderItem, OrderStatus, PaymentMethod, Discount, KitchenOrderStatus } from '@/types';
@@ -230,10 +229,11 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Modified to include 'ready' status orders as active kitchen orders
   const getActiveKitchenOrders = () => {
     return orders.filter(
       order => order.status === 'pending' && 
-      ['new', 'in-progress'].includes(order.kitchenStatus || '')
+      ['new', 'in-progress', 'ready'].includes(order.kitchenStatus || '')
     );
   };
 

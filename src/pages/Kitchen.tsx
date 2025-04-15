@@ -93,11 +93,12 @@ const Kitchen = () => {
     }
   };
   
+  // Modified to only remove from UI, not automatically set to delivered
   const markOrderAsDelivered = (orderId: string) => {
     // Mark the order as delivered by updating its status
     updateKitchenOrderStatus(orderId, 'delivered');
     
-    // Update the local state
+    // Update the local state - remove it from the kitchen view
     setKitchenOrders(prev => prev.filter(o => o.id !== orderId));
     
     // Show toast
@@ -406,4 +407,3 @@ const Kitchen = () => {
 };
 
 export default Kitchen;
-

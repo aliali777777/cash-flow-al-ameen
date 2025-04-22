@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Barcode, Search, Trash2, Receipt, X, Printer } from 'lucide-react';
 import { toast } from 'sonner';
+import { OrderReceipt } from '@/components/cashier/OrderReceipt';
+import ReactDOM from 'react-dom/client';
 
 interface CashierContentProps {
   filteredProducts: Product[];
@@ -86,12 +88,51 @@ export const CashierContent: React.FC<CashierContentProps> = ({
       return;
     }
     
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('Unable to open print window');
+      return;
+    }
+
+    // Add necessary styles and content
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Order #${currentOrder.orderNumber}</title>
+          <style>
+            @media print {
+              body { margin: 0; padding: 0; }
+              .print-only { display: block; }
+            }
+            @page {
+              margin: 0;
+              size: ${settings.receiptWidth}mm auto;
+            }
+          </style>
+        </head>
+        <body>
+    `);
+
+    // Render the receipt component into the print window
+    const receiptContainer = document.createElement('div');
+    printWindow.document.body.appendChild(receiptContainer);
+
+    const root = ReactDOM.createRoot(receiptContainer);
+    root.render(<OrderReceipt order={currentOrder} settings={settings} />);
+
+    // Wait for images to load before printing
+    setTimeout(() => {
+      printWindow.print();
+      // Close the window after printing (optional)
+      printWindow.onafterprint = () => {
+        printWindow.close();
+      };
+    }, 500);
+
     toast.success('Order sent to printer', {
       description: `Order #${currentOrder.orderNumber} is being printed`
     });
-    
-    // In a real system, this would trigger the actual print function
-    window.print();
   };
 
   const handleCloseOrder = () => {

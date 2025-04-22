@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Order, Product, Settings } from '@/types';
 import { ProductList } from '@/components/cashier/ProductList';
 import { CurrentOrder } from '@/components/cashier/CurrentOrder';
@@ -7,6 +7,7 @@ import { Numpad } from '@/components/cashier/Numpad';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Barcode, Search, Trash2, Receipt, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CashierContentProps {
   filteredProducts: Product[];
@@ -47,14 +48,48 @@ export const CashierContent: React.FC<CashierContentProps> = ({
   calculateFinalAmount,
   onOrderComplete
 }) => {
+  const [barcodeInput, setBarcodeInput] = useState('');
+
   const handleNumpadClick = (num: number) => {
-    // Handle numpad input
-    console.log('Numpad clicked:', num);
+    setBarcodeInput(prev => prev + num.toString());
   };
 
   const handleNumpadClear = () => {
-    // Handle clear button
-    console.log('Numpad cleared');
+    setBarcodeInput('');
+  };
+
+  const handleSearchByBarcode = () => {
+    if (!barcodeInput) {
+      toast.error('Please enter a barcode');
+      return;
+    }
+    
+    const product = filteredProducts.find(p => p.id === barcodeInput);
+    if (product) {
+      onProductSelect(product);
+      setBarcodeInput('');
+    } else {
+      toast.error('Product not found');
+    }
+  };
+
+  const handleOpenCashDrawer = () => {
+    // In a real POS system, this would trigger the cash drawer to open
+    toast.success('Cash drawer opened');
+  };
+
+  const handleClosePrint = () => {
+    // This would typically close the current print job
+    toast.success('Print job closed');
+  };
+
+  const handleCloseOrder = () => {
+    if (currentOrder && currentOrder.items.length > 0) {
+      onOrderComplete();
+      toast.success('Order closed successfully');
+    } else {
+      toast.error('No active order to close');
+    }
   };
 
   return (
@@ -67,17 +102,22 @@ export const CashierContent: React.FC<CashierContentProps> = ({
             <Input
               placeholder="باركود المنتج..."
               className="pl-10"
-              value={searchQuery}
-              onChange={onSearchChange}
+              value={barcodeInput}
+              onChange={(e) => setBarcodeInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearchByBarcode();
+                }
+              }}
             />
             <Barcode className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
           </div>
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" onClick={handleSearchByBarcode}>
             <Search className="h-5 w-5" />
           </Button>
         </div>
 
-        {/* Current Order */}
+        {/* Current Order Display */}
         <div className="flex-1 overflow-auto mb-4">
           <CurrentOrder 
             order={currentOrder}
@@ -94,19 +134,35 @@ export const CashierContent: React.FC<CashierContentProps> = ({
 
         {/* Bottom Controls */}
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" className="flex gap-2" onClick={onCancelOrder}>
+          <Button 
+            variant="outline" 
+            className="flex gap-2" 
+            onClick={onCancelOrder}
+          >
             <Trash2 className="h-5 w-5" />
             Delete All
           </Button>
-          <Button variant="outline" className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="flex gap-2"
+            onClick={handleOpenCashDrawer}
+          >
             <Receipt className="h-5 w-5" />
             Cash Drawer
           </Button>
-          <Button variant="outline" className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="flex gap-2"
+            onClick={handleClosePrint}
+          >
             <X className="h-5 w-5" />
             Close Print
           </Button>
-          <Button variant="outline" className="flex gap-2">
+          <Button 
+            variant="outline" 
+            className="flex gap-2"
+            onClick={handleCloseOrder}
+          >
             <X className="h-5 w-5" />
             Close Order
           </Button>
@@ -118,7 +174,7 @@ export const CashierContent: React.FC<CashierContentProps> = ({
         </div>
       </div>
 
-      {/* Right Side - Products */}
+      {/* Products Grid */}
       <div className="w-1/2 p-4">
         <ProductList 
           products={filteredProducts}

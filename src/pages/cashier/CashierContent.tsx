@@ -6,7 +6,7 @@ import { MobileOrderTabs } from '@/components/cashier/MobileOrderTabs';
 import { Numpad } from '@/components/cashier/Numpad';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Barcode, Search, Trash2, CashRegister, X } from 'lucide-react';
+import { Barcode, Search, Trash2, Receipt, X } from 'lucide-react';
 
 interface CashierContentProps {
   filteredProducts: Product[];
@@ -99,7 +99,7 @@ export const CashierContent: React.FC<CashierContentProps> = ({
             Delete All
           </Button>
           <Button variant="outline" className="flex gap-2">
-            <CashRegister className="h-5 w-5" />
+            <Receipt className="h-5 w-5" />
             Cash Drawer
           </Button>
           <Button variant="outline" className="flex gap-2">

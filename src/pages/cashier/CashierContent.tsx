@@ -6,7 +6,7 @@ import { MobileOrderTabs } from '@/components/cashier/MobileOrderTabs';
 import { Numpad } from '@/components/cashier/Numpad';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Barcode, Search, Trash2, Receipt, X } from 'lucide-react';
+import { Barcode, Search, Trash2, Receipt, X, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CashierContentProps {
@@ -73,23 +73,37 @@ export const CashierContent: React.FC<CashierContentProps> = ({
     }
   };
 
-  const handleOpenCashDrawer = () => {
-    // In a real POS system, this would trigger the cash drawer to open
-    toast.success('Cash drawer opened');
+  const handleCashDrawer = () => {
+    // Simulate opening cash drawer
+    toast.info('Cash drawer management initiated', {
+      description: 'Perform cash-related operations like float count, cash-in/out, etc.'
+    });
   };
 
-  const handleClosePrint = () => {
-    // This would typically close the current print job
-    toast.success('Print job closed');
+  const handlePrintOrder = () => {
+    if (!currentOrder || currentOrder.items.length === 0) {
+      toast.error('No order to print');
+      return;
+    }
+    
+    toast.success('Order sent to printer', {
+      description: `Order #${currentOrder.orderNumber} is being printed`
+    });
+    
+    // In a real system, this would trigger the actual print function
+    window.print();
   };
 
   const handleCloseOrder = () => {
-    if (currentOrder && currentOrder.items.length > 0) {
-      onOrderComplete();
-      toast.success('Order closed successfully');
-    } else {
+    if (!currentOrder || currentOrder.items.length === 0) {
       toast.error('No active order to close');
+      return;
     }
+    
+    onOrderComplete();
+    toast.success('Order completed and closed', {
+      description: `Order #${currentOrder.orderNumber} has been processed`
+    });
   };
 
   return (
@@ -145,7 +159,7 @@ export const CashierContent: React.FC<CashierContentProps> = ({
           <Button 
             variant="outline" 
             className="flex gap-2"
-            onClick={handleOpenCashDrawer}
+            onClick={handleCashDrawer}
           >
             <Receipt className="h-5 w-5" />
             Cash Drawer
@@ -153,10 +167,10 @@ export const CashierContent: React.FC<CashierContentProps> = ({
           <Button 
             variant="outline" 
             className="flex gap-2"
-            onClick={handleClosePrint}
+            onClick={handlePrintOrder}
           >
-            <X className="h-5 w-5" />
-            Close Print
+            <Printer className="h-5 w-5" />
+            Print Order
           </Button>
           <Button 
             variant="outline" 

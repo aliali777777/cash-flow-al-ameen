@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
 export const OrderQueueDisplay = () => {
-  const { orders, getActiveKitchenOrders } = useOrder();
+  const { orders, getActiveKitchenOrders, updateKitchenOrderStatus } = useOrder();
   const [queueOrders, setQueueOrders] = useState<Order[]>([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   
@@ -30,7 +30,7 @@ export const OrderQueueDisplay = () => {
     return () => clearInterval(timer);
   }, []);
   
-  // Get all orders for the queue display (including completed ones from today)
+  // Set up auto-removal for ready orders after 30 seconds
   useEffect(() => {
     // Get today's date at 00:00 to filter orders from today
     const today = new Date();
@@ -45,8 +45,33 @@ export const OrderQueueDisplay = () => {
     // Sort orders by number
     const sortedOrders = todaysOrders.sort((a, b) => a.orderNumber - b.orderNumber);
     
-    setQueueOrders(sortedOrders);
-  }, [orders]);
+    // Filter out delivered orders
+    const filteredOrders = sortedOrders.filter(order => 
+      order.kitchenStatus !== 'delivered'
+    );
+    
+    setQueueOrders(filteredOrders);
+    
+    // Set up interval to check for ready orders that should be auto-removed
+    const autoRemoveInterval = setInterval(() => {
+      const readyOrders = filteredOrders.filter(
+        order => order.kitchenStatus === 'ready'
+      );
+      
+      for (const order of readyOrders) {
+        const readyTime = new Date(order.estimatedCompletionTime || order.updatedAt);
+        const currentTime = new Date();
+        const diffInSeconds = (currentTime.getTime() - readyTime.getTime()) / 1000;
+        
+        // If the order has been ready for more than 30 seconds, mark it as delivered
+        if (diffInSeconds >= 30) {
+          updateKitchenOrderStatus(order.id, 'delivered');
+        }
+      }
+    }, 5000); // Check every 5 seconds
+    
+    return () => clearInterval(autoRemoveInterval);
+  }, [orders, updateKitchenOrderStatus]);
   
   // Get localized status text
   const getStatusText = (order: Order): string => {

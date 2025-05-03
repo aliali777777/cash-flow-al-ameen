@@ -229,7 +229,7 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Modified to include 'ready' status orders as active kitchen orders
+  // Modified to exclude 'delivered' status orders from active kitchen orders
   const getActiveKitchenOrders = () => {
     return orders.filter(
       order => order.status === 'pending' && 
@@ -254,6 +254,11 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
       
       setOrders(updatedOrders);
       updateOrder(updatedOrders[orderIndex]);
+      
+      // Show notification when order is delivered
+      if (newStatus === 'delivered') {
+        toast.success(`تم تسليم الطلب رقم ${updatedOrders[orderIndex].orderNumber}`);
+      }
     }
   };
 

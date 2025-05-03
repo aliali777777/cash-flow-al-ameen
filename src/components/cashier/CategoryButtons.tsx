@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Burger, Pizza, CircleDollarSign, CupSoda, 
+import { Pizza, CircleDollarSign, CupSoda, 
          Dessert, CircleX, Trash2, CirclePercent } from 'lucide-react';
 
 interface CategoryButtonsProps {
@@ -10,6 +9,25 @@ interface CategoryButtonsProps {
   onDiscount: () => void;
   selectedCategory: string;
 }
+
+// Custom icon for burger
+const BurgerIcon = () => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="24" 
+    height="24" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <path d="M3 11h18" />
+    <path d="M3 16h18" />
+    <path d="M3 6h18" />
+  </svg>
+);
 
 // Custom icon for fries
 const FriesIcon = () => (
@@ -75,7 +93,7 @@ export const CategoryButtons: React.FC<CategoryButtonsProps> = ({
   selectedCategory
 }) => {
   const categories = [
-    { id: 'burger', name: 'Burger', icon: <Burger className="h-6 w-6" /> },
+    { id: 'burger', name: 'Burger', icon: <BurgerIcon /> },
     { id: 'pizza', name: 'Pizza', icon: <Pizza className="h-6 w-6" /> },
     { id: 'fries', name: 'Fries', icon: <FriesIcon /> },
     { id: 'clear', name: 'Clear All', icon: <CircleX className="h-6 w-6" />, action: onClearAll },

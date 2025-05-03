@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
-import Index from '@/pages/Index';
+import Index from '@/pages/index';
 import Login from '@/pages/Login';
 import Admin from '@/pages/Admin';
 import CashierPage from '@/pages/cashier/CashierPage';
@@ -36,8 +36,6 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
-  const { currentUser } = useAuth();
-
   return (
     <BrowserRouter>
       <AuthProvider>

@@ -1,49 +1,46 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { X, Dot, MinusIcon, Trash2, Delete } from 'lucide-react';
 
 interface NumpadProps {
   onNumberClick: (num: number) => void;
   onClear: () => void;
+  onDelete?: () => void;
+  onDot?: () => void;
 }
 
-export const Numpad: React.FC<NumpadProps> = ({ onNumberClick, onClear }) => {
+export const Numpad: React.FC<NumpadProps> = ({ 
+  onNumberClick, 
+  onClear, 
+  onDelete,
+  onDot
+}) => {
   return (
-    <div className="grid grid-cols-3 gap-1 p-2 max-w-[180px] mx-auto">
-      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+    <div className="grid grid-cols-3 gap-2">
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
         <Button
           key={num}
-          variant="outline"
-          size="sm"
-          className="h-9 w-9"
+          variant="ghost"
+          className="number-pad-button"
           onClick={() => onNumberClick(num)}
         >
           {num}
         </Button>
       ))}
       <Button
-        variant="outline"
-        size="sm"
-        className="h-9 w-9"
+        variant="ghost"
+        className="number-pad-button"
+        onClick={onDot}
+      >
+        <Dot className="h-6 w-6" />
+      </Button>
+      <Button
+        variant="ghost"
+        className="number-pad-button"
         onClick={onClear}
       >
-        C
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-9 w-9"
-        onClick={() => onNumberClick(0)}
-      >
-        0
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-9 w-9"
-        onClick={() => onNumberClick(-1)}
-      >
-        -
+        <X className="h-6 w-6" />
       </Button>
     </div>
   );

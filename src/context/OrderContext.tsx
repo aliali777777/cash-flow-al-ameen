@@ -11,6 +11,7 @@ interface OrderContextProps {
   addItemToOrder: (orderItem: OrderItem) => void;
   removeItemFromOrder: (productId: string) => void;
   updateItemQuantity: (productId: string, quantity: number) => void;
+  updateItemNote: (productId: string, note: string) => void;
   clearCurrentOrder: () => void;
   saveOrder: (customerName?: string, notes?: string, paymentMethod?: PaymentMethod) => Order;
   getOrder: (orderId: string) => Order | undefined;
@@ -112,6 +113,11 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
       // Increment quantity if the item already exists
       updatedItems = [...currentOrder.items];
       updatedItems[existingItemIndex].quantity += orderItem.quantity;
+      
+      // If the new item has notes, update the notes
+      if (orderItem.notes) {
+        updatedItems[existingItemIndex].notes = orderItem.notes;
+      }
     } else {
       // Add new item
       updatedItems = [...currentOrder.items, orderItem];
@@ -152,6 +158,12 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
   const updateItemQuantity = (productId: string, quantity: number) => {
     if (!currentOrder) return;
     
+    // If quantity is zero or less, remove the item
+    if (quantity <= 0) {
+      removeItemFromOrder(productId);
+      return;
+    }
+    
     const updatedItems = currentOrder.items.map(item => {
       if (item.productId === productId) {
         return { ...item, quantity };
@@ -169,6 +181,23 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
       totalAmount,
       discountAmount,
       finalAmount,
+      updatedAt: new Date()
+    });
+  };
+
+  const updateItemNote = (productId: string, note: string) => {
+    if (!currentOrder) return;
+    
+    const updatedItems = currentOrder.items.map(item => {
+      if (item.productId === productId) {
+        return { ...item, notes: note };
+      }
+      return item;
+    });
+    
+    setCurrentOrder({
+      ...currentOrder,
+      items: updatedItems,
       updatedAt: new Date()
     });
   };
@@ -288,6 +317,7 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
     addItemToOrder,
     removeItemFromOrder,
     updateItemQuantity,
+    updateItemNote,
     clearCurrentOrder,
     saveOrder,
     getOrder,

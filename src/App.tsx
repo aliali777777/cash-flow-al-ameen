@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
-// استخدام المسار الصحيح مع مراعاة حساسية الأحرف الكبيرة والصغيرة
 import Index from '@/pages/index';
 import Login from '@/pages/Login';
 import Admin from '@/pages/Admin';

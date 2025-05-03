@@ -31,12 +31,12 @@ export const MobileOrderTabs = ({
   return (
     <div className="lg:hidden">
       <Tabs defaultValue="products">
-        <TabsList className="w-full">
-          <TabsTrigger value="products" className="flex-1">المنتجات</TabsTrigger>
-          <TabsTrigger value="order" className="flex-1">
+        <TabsList className="w-full mb-3">
+          <TabsTrigger value="products" className="flex-1 text-base">المنتجات</TabsTrigger>
+          <TabsTrigger value="order" className="flex-1 text-base">
             الطلب
             {order?.items.length ? (
-              <Badge className="ml-2" variant="secondary">
+              <Badge className="ml-2 text-base" variant="secondary">
                 {order.items.length}
               </Badge>
             ) : null}
@@ -47,7 +47,7 @@ export const MobileOrderTabs = ({
           {/* Product content is already shown outside tabs on mobile */}
         </TabsContent>
         
-        <TabsContent value="order">
+        <TabsContent value="order" className="mt-0">
           <CurrentOrder
             order={order}
             settings={settings}

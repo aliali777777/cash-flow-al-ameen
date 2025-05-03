@@ -10,6 +10,7 @@ import { Barcode, Search, Trash2, Receipt, X, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrderReceipt } from '@/components/cashier/OrderReceipt';
 import ReactDOM from 'react-dom/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CashierContentProps {
   filteredProducts: Product[];
@@ -51,6 +52,7 @@ export const CashierContent: React.FC<CashierContentProps> = ({
   onOrderComplete
 }) => {
   const [barcodeInput, setBarcodeInput] = useState('');
+  const isMobile = useIsMobile();
 
   const handleNumpadClick = (num: number) => {
     setBarcodeInput(prev => prev + num.toString());
@@ -150,7 +152,7 @@ export const CashierContent: React.FC<CashierContentProps> = ({
   return (
     <main className="flex h-full overflow-hidden">
       {/* Left Side - Order and Controls */}
-      <div className="w-1/2 p-4 border-r flex flex-col">
+      <div className={`${isMobile ? 'w-full' : 'w-3/5'} p-4 border-r flex flex-col`}>
         {/* Top Controls */}
         <div className="flex gap-2 mb-4">
           <div className="flex-1 relative">
@@ -195,7 +197,7 @@ export const CashierContent: React.FC<CashierContentProps> = ({
             onClick={onCancelOrder}
           >
             <Trash2 className="h-5 w-5" />
-            Delete All
+            إلغاء الطلب
           </Button>
           <Button 
             variant="outline" 
@@ -203,7 +205,7 @@ export const CashierContent: React.FC<CashierContentProps> = ({
             onClick={handleCashDrawer}
           >
             <Receipt className="h-5 w-5" />
-            Cash Drawer
+            الصندوق
           </Button>
           <Button 
             variant="outline" 
@@ -211,7 +213,7 @@ export const CashierContent: React.FC<CashierContentProps> = ({
             onClick={handlePrintOrder}
           >
             <Printer className="h-5 w-5" />
-            Print Order
+            طباعة
           </Button>
           <Button 
             variant="outline" 
@@ -219,7 +221,7 @@ export const CashierContent: React.FC<CashierContentProps> = ({
             onClick={handleCloseOrder}
           >
             <X className="h-5 w-5" />
-            Close Order
+            إغلاق
           </Button>
         </div>
 
@@ -230,7 +232,7 @@ export const CashierContent: React.FC<CashierContentProps> = ({
       </div>
 
       {/* Products Grid */}
-      <div className="w-1/2 p-4">
+      <div className={`${isMobile ? 'hidden' : 'w-2/5'} p-4`}>
         <ProductList 
           products={filteredProducts}
           onProductSelect={onProductSelect}

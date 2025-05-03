@@ -1,161 +1,138 @@
-
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { HomeIcon, ReceiptIcon, UtensilsCrossedIcon, PackageIcon, AreaChartIcon, UsersIcon, SettingsIcon, LogOutIcon } from 'lucide-react';
+import { QueueListIcon } from '@/components/icons/QueueListIcon';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/context/AuthContext';
+import { useLocation, Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { useMobile } from '@/hooks/use-mobile';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useAuth } from '@/context/AuthContext';
-import { PERMISSIONS } from '@/types';
-import { Menu, X, Home, Users, Package, FileText, Settings, LogOut, Coffee } from 'lucide-react';
+import { Menu } from 'lucide-react';
+import { UserRole } from '@/types';
 
-interface SidebarProps {
-  className?: string;
-}
-
-export function Sidebar({ className }: SidebarProps) {
-  const [open, setOpen] = React.useState(false);
-  const { hasPermission, isAdmin, logout } = useAuth();
+export function Sidebar({ className }: { className?: string }) {
+  const { pathname } = useLocation();
+  const { currentUser } = useAuth();
   
-  return (
-    <>
-      {/* Mobile sidebar trigger */}
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="md:hidden">
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle Menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="right" className="p-0">
-          <SidebarContent className="py-2" setOpen={setOpen} />
-        </SheetContent>
-      </Sheet>
-
-      {/* Desktop sidebar */}
-      <div className={cn("hidden border-r bg-background md:block", className)}>
-        <SidebarContent />
-      </div>
-    </>
-  );
-}
-
-interface SidebarContentProps {
-  className?: string;
-  setOpen?: (open: boolean) => void;
-}
-
-function SidebarContent({ className, setOpen }: SidebarContentProps) {
-  const { hasPermission, isAdmin, logout } = useAuth();
-  const location = useLocation();
-  
-  // Generate the navigation items based on permissions
-  const navItems = [
+  const nav = [
     {
-      title: 'الرئيسية',
-      icon: Home,
-      href: '/',
-      active: location.pathname === '/',
-      permission: PERMISSIONS.CREATE_ORDERS,
+      name: 'Home',
+      nameAr: 'الرئيسية',
+      path: '/',
+      icon: HomeIcon,
+      roles: [UserRole.ADMIN, UserRole.CASHIER, UserRole.KITCHEN],
     },
     {
-      title: 'المطبخ',
-      icon: Coffee,
-      href: '/kitchen',
-      active: location.pathname === '/kitchen',
-      permission: PERMISSIONS.KITCHEN_DISPLAY,
+      name: 'Cashier',
+      nameAr: 'الكاشير',
+      path: '/cashier',
+      icon: ReceiptIcon,
+      roles: [UserRole.ADMIN, UserRole.CASHIER],
     },
     {
-      title: 'التقارير',
-      icon: FileText,
-      href: '/reports',
-      active: location.pathname === '/reports',
-      permission: PERMISSIONS.VIEW_REPORTS,
+      name: 'Kitchen',
+      nameAr: 'المطبخ',
+      path: '/kitchen',
+      icon: UtensilsCrossedIcon,
+      roles: [UserRole.ADMIN, UserRole.KITCHEN],
     },
     {
-      title: 'المنتجات',
-      icon: Package,
-      href: '/products',
-      active: location.pathname === '/products',
-      permission: PERMISSIONS.MANAGE_PRODUCTS,
+      name: 'Products',
+      nameAr: 'المنتجات',
+      path: '/products',
+      icon: PackageIcon,
+      roles: [UserRole.ADMIN],
     },
     {
-      title: 'المستخدمين',
-      icon: Users,
-      href: '/users',
-      active: location.pathname === '/users',
-      permission: PERMISSIONS.MANAGE_USERS,
+      name: 'Reports',
+      nameAr: 'التقارير',
+      path: '/reports',
+      icon: AreaChartIcon,
+      roles: [UserRole.ADMIN],
     },
     {
-      title: 'الإعدادات',
-      icon: Settings,
-      href: '/settings',
-      active: location.pathname === '/settings',
-      permission: PERMISSIONS.ACCESS_SETTINGS,
+      name: 'Users',
+      nameAr: 'المستخدمين',
+      path: '/admin',
+      icon: UsersIcon,
+      roles: [UserRole.ADMIN],
+    },
+    {
+      name: 'Settings',
+      nameAr: 'الإعدادات',
+      path: '/settings',
+      icon: SettingsIcon,
+      roles: [UserRole.ADMIN],
+    },
+    {
+      name: 'Customer Queue',
+      nameAr: 'شاشة الانتظار',
+      path: '/queue',
+      icon: QueueListIcon,
+      roles: [UserRole.ADMIN, UserRole.CASHIER, UserRole.KITCHEN],
+      isPublic: true,
     },
   ];
-  
-  const handleItemClick = () => {
-    if (setOpen) {
-      setOpen(false);
-    }
-  };
-  
+
+  const isMobile = useMobile();
+
   return (
-    <div className={cn("flex h-full flex-col rtl", className)}>
-      <div className="flex h-14 items-center border-b px-4">
-        <Button
-          variant="ghost"
-          className="mr-auto md:hidden"
-          onClick={() => setOpen && setOpen(false)}
-        >
-          <X className="h-5 w-5" />
-          <span className="sr-only">Close</span>
-        </Button>
-        <div className="flex items-center gap-2 font-semibold">
-          <span className="arabic text-lg">كاش فلو</span>
-        </div>
+    <div className={cn("flex flex-col space-y-4 py-4 border-r bg-secondary text-secondary-foreground", className)}>
+      <div className="px-3 py-2">
+        <Link to="/" className="hover:underline px-2">
+          <h1 className="font-bold text-lg">
+            مطعمي
+          </h1>
+        </Link>
       </div>
-      <ScrollArea className="flex-1">
-        <nav className="grid gap-1 px-2 py-4">
-          {navItems.map((item) => {
-            // Only show items the user has permission for
-            if (!hasPermission(item.permission) && !isAdmin()) {
-              return null;
-            }
-            
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                onClick={handleItemClick}
+      <div className="flex-1 space-y-1">
+        {nav.map((item) => (
+          (item.roles.includes(currentUser?.role || UserRole.CASHIER) || item.isPublic) && (
+            <Link key={item.name} to={item.path}>
+              <Button
+                variant="ghost"
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                  item.active ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : ""
+                  "justify-start font-normal",
+                  pathname === item.path ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground",
                 )}
               >
-                <item.icon className="h-5 w-5" />
-                <span>{item.title}</span>
-              </Link>
-            );
-          })}
-        </nav>
-        <Separator />
-        <div className="p-2">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start"
-            onClick={() => {
-              logout();
-              if (setOpen) setOpen(false);
-            }}
-          >
-            <LogOut className="h-5 w-5 ml-2" />
-            <span>تسجيل الخروج</span>
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.nameAr}
+              </Button>
+            </Link>
+          )
+        ))}
+      </div>
+      <Separator />
+      <div className="px-3 py-2">
+        {currentUser ? (
+          <Button variant="ghost" className="justify-start font-normal" onClick={() => {
+            localStorage.removeItem('currentUser');
+            window.location.href = '/login';
+          }}>
+            <LogOutIcon className="mr-2 h-4 w-4" />
+            تسجيل الخروج
           </Button>
-        </div>
-      </ScrollArea>
+        ) : (
+          <Link to="/login">
+            <Button variant="ghost" className="justify-start font-normal">
+              تسجيل الدخول
+            </Button>
+          </Link>
+        )}
+      </div>
+      {isMobile && (
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="absolute top-2 left-2">
+              <Menu className="h-4 w-4" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 pt-10">
+            <Sidebar />
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 }

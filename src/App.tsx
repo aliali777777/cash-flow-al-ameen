@@ -1,117 +1,91 @@
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
-import { ProductProvider } from "@/context/ProductContext";
-import { OrderProvider } from "@/context/OrderContext";
-import { useAuth } from "@/context/AuthContext";
+import Index from '@/pages';
+import Login from '@/pages/Login';
+import Admin from '@/pages/Admin';
+import CashierPage from '@/pages/cashier/CashierPage';
+import Kitchen from '@/pages/Kitchen';
+import Products from '@/pages/Products';
+import Reports from '@/pages/Reports';
+import Settings from '@/pages/Settings';
+import NotFound from '@/pages/NotFound';
+import CustomerQueue from '@/pages/CustomerQueue';
 
-// Pages
-import Login from "./pages/Login";
-import Admin from "./pages/Admin";
-import CashierPage from "./pages/cashier/CashierPage";
-import Kitchen from "./pages/Kitchen";
-import Reports from "./pages/Reports";
-import NotFound from "./pages/NotFound";
-import Index from "./pages/Index";
-import Products from "./pages/Products";
-import Settings from "./pages/Settings";
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { ProductProvider } from '@/context/ProductContext';
+import { OrderProvider } from '@/context/OrderContext';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
-const queryClient = new QueryClient();
+import { initStorage } from '@/utils/storage';
 
-// Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuth();
+  const { currentUser } = useAuth();
   
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+  useEffect(() => {
+    initStorage();
+  }, []);
+  
+  if (!currentUser) {
+    return <Navigate to="/login" />;
   }
   
   return <>{children}</>;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <ProductProvider>
-        <OrderProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+function App() {
+  const { currentUser } = useAuth();
+
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <ProductProvider>
+          <OrderProvider>
+            <ThemeProvider>
               <Routes>
+                <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
-                
-                <Route 
-                  path="/" 
-                  element={<Index />} 
-                />
-                
-                <Route 
-                  path="/cashier" 
-                  element={
-                    <ProtectedRoute>
-                      <CashierPage />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/admin" 
-                  element={
-                    <ProtectedRoute>
-                      <Admin />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/kitchen" 
-                  element={
-                    <ProtectedRoute>
-                      <Kitchen />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/reports" 
-                  element={
-                    <ProtectedRoute>
-                      <Reports />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/products" 
-                  element={
-                    <ProtectedRoute>
-                      <Products />
-                    </ProtectedRoute>
-                  } 
-                />
-                
-                <Route 
-                  path="/settings" 
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  } 
-                />
-                
+                <Route path="/admin" element={
+                  <ProtectedRoute>
+                    <Admin />
+                  </ProtectedRoute>
+                } />
+                <Route path="/cashier" element={
+                  <ProtectedRoute>
+                    <CashierPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/kitchen" element={
+                  <ProtectedRoute>
+                    <Kitchen />
+                  </ProtectedRoute>
+                } />
+                <Route path="/products" element={
+                  <ProtectedRoute>
+                    <Products />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reports" element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/queue" element={<CustomerQueue />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </OrderProvider>
-      </ProductProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+              <Toaster />
+            </ThemeProvider>
+          </OrderProvider>
+        </ProductProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
 
 export default App;

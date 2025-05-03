@@ -1,10 +1,11 @@
+
 import { HomeIcon, ReceiptIcon, UtensilsCrossedIcon, PackageIcon, AreaChartIcon, UsersIcon, SettingsIcon, LogOutIcon } from 'lucide-react';
 import { QueueListIcon } from '@/components/icons/QueueListIcon';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useLocation, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
@@ -74,7 +75,7 @@ export function Sidebar({ className }: { className?: string }) {
     },
   ];
 
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   return (
     <div className={cn("flex flex-col space-y-4 py-4 border-r bg-secondary text-secondary-foreground", className)}>
@@ -87,7 +88,7 @@ export function Sidebar({ className }: { className?: string }) {
       </div>
       <div className="flex-1 space-y-1">
         {nav.map((item) => (
-          (item.roles.includes(currentUser?.role || UserRole.CASHIER) || item.isPublic) && (
+          ((item.roles.includes(currentUser?.role as UserRole) || item.isPublic)) && (
             <Link key={item.name} to={item.path}>
               <Button
                 variant="ghost"

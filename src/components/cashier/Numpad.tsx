@@ -9,12 +9,13 @@ interface NumpadProps {
 
 export const Numpad: React.FC<NumpadProps> = ({ onNumberClick, onClear }) => {
   return (
-    <div className="grid grid-cols-3 gap-1 p-2">
+    <div className="grid grid-cols-3 gap-1 p-2 max-w-[180px] mx-auto">
       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
         <Button
           key={num}
           variant="outline"
-          className="number-pad-button"
+          size="sm"
+          className="h-9 w-9"
           onClick={() => onNumberClick(num)}
         >
           {num}
@@ -22,21 +23,24 @@ export const Numpad: React.FC<NumpadProps> = ({ onNumberClick, onClear }) => {
       ))}
       <Button
         variant="outline"
-        className="number-pad-button"
+        size="sm"
+        className="h-9 w-9"
         onClick={onClear}
       >
-        Clear
+        C
       </Button>
       <Button
         variant="outline"
-        className="number-pad-button"
+        size="sm"
+        className="h-9 w-9"
         onClick={() => onNumberClick(0)}
       >
         0
       </Button>
       <Button
         variant="outline"
-        className="number-pad-button col-span-1"
+        size="sm"
+        className="h-9 w-9"
         onClick={() => onNumberClick(-1)}
       >
         -

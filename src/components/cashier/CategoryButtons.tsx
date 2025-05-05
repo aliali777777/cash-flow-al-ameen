@@ -40,19 +40,19 @@ export const CategoryButtons: React.FC<CategoryButtonsProps> = ({
   ];
 
   return (
-    <div className="grid grid-cols-5 gap-1">
+    <div className="grid grid-cols-3 gap-1 h-full overflow-y-auto">
       {categories.map((category) => (
         <Button
           key={category.id}
           variant="outline"
-          className={`flex items-center justify-center py-3 rounded-md text-right h-auto ${
+          className={`h-24 flex items-center justify-center py-3 rounded-md text-right ${
             selectedCategory === category.id 
               ? 'bg-amber-500 text-black border-amber-700' 
               : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
           }`}
           onClick={() => onSelectCategory(category.id)}
         >
-          <span className="text-sm text-right">{category.name}</span>
+          <span className="text-sm text-center">{category.name}</span>
         </Button>
       ))}
     </div>

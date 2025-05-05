@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { getSettings } from '@/utils/storage';
 import { useProductFilter } from './hooks/useProductFilter';
@@ -10,6 +10,7 @@ import CurrentOrderSummary from '@/components/cashier/CurrentOrderSummary';
 import { PaymentButtons } from '@/components/cashier/PaymentButtons';
 import { ProductDetailDialog } from '@/components/cashier/ProductDetailDialog';
 import { ProductGrid } from '@/components/cashier/ProductGrid'; 
+import { OrderHeader } from '@/components/cashier/OrderHeader';
 import { useOrder } from '@/context/OrderContext';
 import { useProducts } from '@/context/ProductContext';
 import { PaymentDialog } from '@/components/order/PaymentDialog';
@@ -22,7 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
 
 const CashierPage = () => {
-  
+  const navigate = useNavigate();
   const settings = getSettings();
   const { availableProducts } = useProducts();
   const [isDiscountDialogOpen, setIsDiscountDialogOpen] = useState(false);
@@ -163,7 +164,8 @@ const CashierPage = () => {
   };
 
   const handleCloseOrder = () => {
-    toast.success('Order closed');
+    navigate('/');
+    toast.success('تم العودة إلى الصفحة الرئيسية');
   };
 
   // Select an item when clicked
@@ -186,16 +188,8 @@ const CashierPage = () => {
     <ThemeProvider defaultTheme="dark" storageKey="pos-theme">
       <div className="flex h-screen bg-black overflow-hidden">
         <div className="flex-1 flex flex-col h-full bg-black text-white overflow-hidden">
-          <div className="absolute top-4 right-4 z-10">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-pos-gold"
-              onClick={handleCloseOrder}
-            >
-              <X className="h-6 w-6" />
-            </Button>
-          </div>
+          {/* Replace the old X button with the OrderHeader component */}
+          <OrderHeader storeName="SHIWOW" onClose={handleCloseOrder} />
           
           <div className="flex-1 p-4 overflow-hidden">
             <div className="grid grid-rows-2 h-full gap-4">

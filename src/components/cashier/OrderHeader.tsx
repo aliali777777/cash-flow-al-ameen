@@ -3,16 +3,27 @@ import React from 'react';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface OrderHeaderProps {
   storeName: string;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export const OrderHeader: React.FC<OrderHeaderProps> = ({ 
   storeName,
   onClose 
 }) => {
+  const navigate = useNavigate();
+  
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      navigate('/');
+    }
+  };
+  
   return (
     <div className="flex items-center justify-between p-4 border-b border-pos-lightgray">
       <h1 className="text-3xl font-bold text-pos-gold">{storeName}</h1>
@@ -29,7 +40,7 @@ export const OrderHeader: React.FC<OrderHeaderProps> = ({
         <Button 
           variant="ghost" 
           className="text-pos-gold hover:text-white"
-          onClick={onClose}
+          onClick={handleClose}
         >
           <X className="h-6 w-6" />
         </Button>

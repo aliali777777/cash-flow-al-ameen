@@ -12,12 +12,12 @@ export const CategoryButtons: React.FC<CategoryButtonsProps> = ({
   selectedCategory
 }) => {
   const categories = [
-    { id: 'burger', name: 'Burger', icon: '🍔' },
-    { id: 'pizza', name: 'Pizza', icon: '🍕' },
-    { id: 'fries', name: 'Fries', icon: '🍟' },
-    { id: 'drinks', name: 'Drinks', icon: '🥤' },
-    { id: 'main', name: 'Main', icon: '🍽️' },
-    { id: 'sides', name: 'Sides', icon: '🧁' },
+    { id: 'burger', name: 'Burger' },
+    { id: 'pizza', name: 'Pizza' },
+    { id: 'fries', name: 'Fries' },
+    { id: 'drinks', name: 'Drinks' },
+    { id: 'main', name: 'Main' },
+    { id: 'sides', name: 'Sides' },
   ];
 
   return (
@@ -26,14 +26,13 @@ export const CategoryButtons: React.FC<CategoryButtonsProps> = ({
         <Button
           key={category.id}
           variant="outline"
-          className={`flex flex-col items-center justify-center py-3 rounded-lg ${
+          className={`flex items-center justify-center py-3 rounded-lg ${
             selectedCategory === category.id 
               ? 'bg-pos-gold/10 text-pos-gold border-pos-gold/50' 
               : 'bg-pos-darkgray text-pos-gold border-gray-800 hover:bg-pos-lightgray'
           }`}
           onClick={() => onSelectCategory(category.id)}
         >
-          <span className="text-2xl mb-1">{category.icon}</span>
           <span className="text-base">{category.name}</span>
         </Button>
       ))}

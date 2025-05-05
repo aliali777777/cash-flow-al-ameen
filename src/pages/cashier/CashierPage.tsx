@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { getSettings } from '@/utils/storage';
@@ -9,7 +8,9 @@ import { Numpad } from '@/components/cashier/Numpad';
 import CurrentOrderSummary from '@/components/cashier/CurrentOrderSummary';
 import { PaymentButtons } from '@/components/cashier/PaymentButtons';
 import { ProductDetailDialog } from '@/components/cashier/ProductDetailDialog';
+import { ProductList } from '@/components/cashier/ProductList'; // Import ProductList
 import { useOrder } from '@/context/OrderContext';
+import { useProducts } from '@/context/ProductContext';
 import { PaymentDialog } from '@/components/order/PaymentDialog';
 import { DiscountDialog } from '@/components/order/DiscountDialog';
 import { OrderItem } from '@/types';
@@ -21,11 +22,13 @@ import { X } from 'lucide-react';
 
 const CashierPage = () => {
   const settings = getSettings();
+  const { availableProducts } = useProducts();
   const [isDiscountDialogOpen, setIsDiscountDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [itemNote, setItemNote] = useState<string>("");
+  const [showProducts, setShowProducts] = useState(false);
   
   const { 
     filteredProducts,
@@ -53,6 +56,16 @@ const CashierPage = () => {
   } = useOrderManagement();
 
   const { updateItemQuantity } = useOrder();
+
+  // Modified to show product list
+  const handleSelectCategory = (category: string) => {
+    handleCategoryChange(category);
+    setShowProducts(true);
+  };
+
+  const handleBackToCategories = () => {
+    setShowProducts(false);
+  };
 
   const handleNumpadClick = (num: number) => {
     if (selectedItemId && currentOrder) {
@@ -154,7 +167,8 @@ const CashierPage = () => {
   };
 
   const handleAddItem = () => {
-    toast.info("Select a category to view products");
+    setShowProducts(true);
+    toast.info("Select a product to add to your order");
   };
 
   const handleDiscount = () => {
@@ -179,6 +193,11 @@ const CashierPage = () => {
     }
     toast.info(`Selected ${item.product.name}`);
   };
+
+  // Get products for selected category
+  const categoryProducts = selectedCategory === 'all' 
+    ? availableProducts 
+    : availableProducts.filter(p => p.category === selectedCategory);
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="pos-theme">
@@ -214,35 +233,65 @@ const CashierPage = () => {
               
               {/* Categories and Numpad - Right Side */}
               <div className="lg:col-span-3 h-full flex flex-col">
-                <div className="mb-4">
-                  <CategoryButtons 
-                    onSelectCategory={handleCategoryChange}
-                    selectedCategory={selectedCategory}
-                  />
-                </div>
+                {showProducts ? (
+                  <div className="mb-4 flex flex-col h-full">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-xl font-bold text-pos-gold">{selectedCategory.toUpperCase()} Products</h2>
+                      <Button 
+                        variant="outline" 
+                        className="bg-pos-darkgray text-pos-gold border-gray-800 hover:bg-pos-lightgray"
+                        onClick={handleBackToCategories}
+                      >
+                        Back to Categories
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 overflow-auto flex-1">
+                      {categoryProducts.map(product => (
+                        <Button
+                          key={product.id}
+                          variant="outline"
+                          className="h-24 flex flex-col items-center justify-center p-2 bg-pos-darkgray text-pos-gold border-gray-800 hover:bg-pos-lightgray"
+                          onClick={() => handleProductClick(product)}
+                        >
+                          <span className="text-sm font-medium mb-2">{product.nameAr || product.name}</span>
+                          <span className="text-xs">{settings.currencySymbol}{product.price.toFixed(2)}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-4">
+                    <CategoryButtons 
+                      onSelectCategory={handleSelectCategory}
+                      selectedCategory={selectedCategory}
+                    />
+                  </div>
+                )}
                 
-                <div className="grid grid-cols-2 gap-4 h-full mt-4">
-                  <div className="flex flex-col">
-                    <Numpad 
-                      onNumberClick={handleNumpadClick} 
-                      onClear={handleNumpadClear}
-                      onDelete={handleNumpadDelete}
-                      onDot={handleNumpadDot}
-                    />
+                {!showProducts && (
+                  <div className="grid grid-cols-2 gap-4 h-full mt-4">
+                    <div className="flex flex-col">
+                      <Numpad 
+                        onNumberClick={handleNumpadClick} 
+                        onClear={handleNumpadClear}
+                        onDelete={handleNumpadDelete}
+                        onDot={handleNumpadDot}
+                      />
+                    </div>
+                    
+                    <div className="flex flex-col">
+                      <PaymentButtons 
+                        onClearAll={handleClearAll}
+                        onDiscount={handleDiscount}
+                        onDeleteItem={handleDeleteSelected}
+                        onCashPayment={handleCashPayment}
+                        onAddItem={handleAddItem}
+                        onAddNote={handleAddNote}
+                        selectedItemExists={!!selectedItemId}
+                      />
+                    </div>
                   </div>
-                  
-                  <div className="flex flex-col">
-                    <PaymentButtons 
-                      onClearAll={handleClearAll}
-                      onDiscount={handleDiscount}
-                      onDeleteItem={handleDeleteSelected}
-                      onCashPayment={handleCashPayment}
-                      onAddItem={handleAddItem}
-                      onAddNote={handleAddNote}
-                      selectedItemExists={!!selectedItemId}
-                    />
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>

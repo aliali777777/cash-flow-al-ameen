@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/common/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge'; // Import the Badge component instead of creating our own
+import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -31,24 +32,50 @@ import {
   Eye,
   EyeOff,
   Package,
-  Tag
+  Category,
+  Survey,
 } from 'lucide-react';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CategoryManagement } from '@/components/products/CategoryManagement';
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 const ProductDialog = ({ 
   product, 
   isOpen, 
   onOpenChange, 
-  onSave 
+  onSave,
+  categories
 }: { 
   product?: Product; 
   isOpen: boolean; 
   onOpenChange: (open: boolean) => void; 
-  onSave: (product: Omit<Product, 'id'>) => void 
+  onSave: (product: Omit<Product, 'id'>) => void,
+  categories: string[];
 }) => {
   const [formData, setFormData] = useState<Omit<Product, 'id'>>({
     name: product?.name || '',
     nameAr: product?.nameAr || '',
-    category: product?.category || '',
+    category: product?.category || (categories.length > 0 ? categories[0] : ''),
     price: product?.price || 0,
     cost: product?.cost || 0,
     image: product?.image || '',
@@ -79,6 +106,13 @@ const ProductDialog = ({
     onSave(formData);
     onOpenChange(false);
   };
+
+  useEffect(() => {
+    // Update category if the current one doesn't exist anymore
+    if (formData.category && !categories.includes(formData.category) && categories.length > 0) {
+      handleChange('category', categories[0]);
+    }
+  }, [categories]);
 
   return (
     <DialogContent className="sm:max-w-[600px]">
@@ -113,12 +147,27 @@ const ProductDialog = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="category">التصنيف</Label>
-            <Input
-              id="category"
-              value={formData.category}
-              onChange={(e) => handleChange('category', e.target.value)}
-              placeholder="Category"
-            />
+            <Select 
+              value={formData.category} 
+              onValueChange={(value) => handleChange('category', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="اختر تصنيف" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.length > 0 ? (
+                  categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled>
+                    لا توجد تصنيفات متاحة
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-2">
@@ -205,13 +254,26 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState<string>("all");
+  const [categories, setCategories] = useState<string[]>([]);
   
-  const filteredProducts = products.filter(
-    product => 
+  // Extract all unique categories from products
+  useEffect(() => {
+    const uniqueCategories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
+    setCategories(uniqueCategories);
+  }, [products]);
+  
+  // Filter products based on search query and active tab
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = 
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.nameAr && product.nameAr.includes(searchQuery)) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      product.category.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesCategory = activeTab === "all" || product.category === activeTab;
+    
+    return matchesSearch && matchesCategory;
+  });
   
   const handleAddProduct = () => {
     setSelectedProduct(undefined);
@@ -238,6 +300,64 @@ const Products = () => {
     } else {
       addNewProduct(formData);
     }
+  };
+  
+  // Category management handlers
+  const handleAddCategory = (category: string) => {
+    if (categories.includes(category)) {
+      toast.error("هذا التصنيف موجود بالفعل");
+      return;
+    }
+    setCategories(prev => [...prev, category]);
+    toast.success(`تمت إضافة التصنيف "${category}" بنجاح`);
+  };
+  
+  const handleEditCategory = (oldCategory: string, newCategory: string) => {
+    if (oldCategory === newCategory) return;
+    
+    if (categories.includes(newCategory)) {
+      toast.error("هذا التصنيف موجود بالفعل");
+      return;
+    }
+    
+    // Update category in list
+    setCategories(prev => prev.map(c => c === oldCategory ? newCategory : c));
+    
+    // Update all products with this category
+    products
+      .filter(p => p.category === oldCategory)
+      .forEach(p => {
+        updateExistingProduct({
+          ...p,
+          category: newCategory
+        });
+      });
+    
+    toast.success(`تم تغيير اسم التصنيف من "${oldCategory}" إلى "${newCategory}"`);
+    
+    // Update active tab if needed
+    if (activeTab === oldCategory) {
+      setActiveTab(newCategory);
+    }
+  };
+  
+  const handleDeleteCategory = (category: string) => {
+    // Check if products use this category
+    const productsWithCategory = products.filter(p => p.category === category);
+    
+    if (productsWithCategory.length > 0) {
+      toast.error(`لا يمكن حذف التصنيف "${category}" لأنه مستخدم في ${productsWithCategory.length} منتج`);
+      return;
+    }
+    
+    setCategories(prev => prev.filter(c => c !== category));
+    
+    // Reset active tab if needed
+    if (activeTab === category) {
+      setActiveTab("all");
+    }
+    
+    toast.success(`تم حذف التصنيف "${category}" بنجاح`);
   };
   
   // Redirect if no permissions
@@ -287,19 +407,51 @@ const Products = () => {
         </header>
         
         <main className="flex-1 overflow-auto p-4">
-          <Card className="mb-4">
-            <CardContent className="pt-6">
-              <div className="relative">
-                <Search className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                <Input
-                  placeholder="بحث عن منتج..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-3 pr-10 rtl"
+          <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 mb-4">
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center text-base">
+                  <Category className="mr-2 h-4 w-4" />
+                  إدارة التصنيفات
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CategoryManagement 
+                  categories={categories}
+                  onAddCategory={handleAddCategory}
+                  onEditCategory={handleEditCategory}
+                  onDeleteCategory={handleDeleteCategory}
                 />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+            
+            <Card className="lg:col-span-5">
+              <CardContent className="pt-6">
+                <div className="relative mb-4">
+                  <Search className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="بحث عن منتج..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-3 pr-10 rtl"
+                  />
+                </div>
+                
+                <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="mb-4 w-full overflow-x-auto flex flex-nowrap justify-start">
+                    <TabsTrigger value="all" className="flex-shrink-0">
+                      الكل ({products.length})
+                    </TabsTrigger>
+                    {categories.map(category => (
+                      <TabsTrigger key={category} value={category} className="flex-shrink-0">
+                        {category} ({products.filter(p => p.category === category).length})
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
           
           <Card>
             <CardHeader>
@@ -395,6 +547,7 @@ const Products = () => {
             isOpen={dialogOpen} 
             onOpenChange={setDialogOpen} 
             onSave={handleSaveProduct} 
+            categories={categories}
           />
         </Dialog>
       </div>

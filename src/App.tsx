@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
-import IndexPage from '@/pages/index'; // Fixed casing to match actual file name
+import Index from '@/pages/index'; // Using the correct import name
 import Login from '@/pages/Login';
 import Admin from '@/pages/Admin';
 import CashierPage from '@/pages/cashier/CashierPage';
@@ -43,7 +43,7 @@ function App() {
           <OrderProvider>
             <ThemeProvider>
               <Routes>
-                <Route path="/" element={<IndexPage />} />
+                <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/admin" element={
                   <ProtectedRoute>

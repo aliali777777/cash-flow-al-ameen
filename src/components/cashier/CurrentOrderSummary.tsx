@@ -28,12 +28,21 @@ const CurrentOrderSummary = ({
   onAddNote
 }: CurrentOrderSummaryProps) => {
   
+  const formatDate = () => {
+    const date = new Date();
+    return date.toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  };
+  
   if (!order) {
     return (
-      <Card className="h-full flex flex-col shadow-lg bg-black border-gray-800 rounded-3xl">
-        <CardHeader className="text-center pt-6">
-          <h1 className="text-3xl font-bold text-pos-gold">SHIWOW</h1>
-          <p className="text-white/60">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+      <Card className="h-full flex flex-col shadow-lg bg-black border-gray-800 rounded-lg">
+        <CardHeader className="text-center pt-4 pb-2">
+          <h1 className="text-2xl font-bold text-pos-gold">SHIWOW</h1>
+          <p className="text-gray-500 text-sm">{formatDate()}</p>
         </CardHeader>
         
         <CardContent className="flex-1 overflow-auto p-4">
@@ -55,10 +64,10 @@ const CurrentOrderSummary = ({
   }
   
   return (
-    <Card className="h-full flex flex-col shadow-lg bg-black border-gray-800 rounded-3xl">
-      <CardHeader className="text-center pt-6">
-        <h1 className="text-3xl font-bold text-pos-gold">SHIWOW</h1>
-        <p className="text-white/60">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+    <Card className="h-full flex flex-col shadow-lg bg-black border-gray-800 rounded-lg">
+      <CardHeader className="text-center pt-4 pb-2">
+        <h1 className="text-2xl font-bold text-pos-gold">SHIWOW</h1>
+        <p className="text-gray-500 text-sm">{formatDate()}</p>
       </CardHeader>
       
       <CardContent className="flex-1 overflow-auto p-4">
@@ -72,24 +81,18 @@ const CurrentOrderSummary = ({
                 }`}
                 onClick={() => onSelectItem(item)}
               >
-                <div className="py-3">
+                <div className="py-2">
                   <div className="flex justify-between items-start">
-                    <div className="flex items-start">
-                      <span className="text-pos-gold text-xl mr-2">{item.quantity}</span>
-                      <h3 className="text-pos-gold text-xl">
+                    <div className="flex items-center">
+                      <span className="text-pos-gold mr-2">{item.quantity}</span>
+                      <h3 className="text-pos-gold">
                         {item.product.nameAr || item.product.name}
                       </h3>
                     </div>
-                    <span className="text-pos-gold text-xl">
+                    <span className="text-pos-gold">
                       ${(item.product.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
-                  
-                  {item.notes && (
-                    <p className="text-gray-400 pl-6 mt-1">
-                      {item.notes}
-                    </p>
-                  )}
                 </div>
               </div>
             ))}
@@ -101,14 +104,14 @@ const CurrentOrderSummary = ({
         )}
         
         {calculateOrderDiscount() > 0 && (
-          <div className="flex justify-between text-pos-gold mt-4 border-t border-gray-800 pt-4">
+          <div className="flex justify-between text-pos-gold mt-4 border-b border-gray-800 pb-2">
             <span>Discount</span>
-            <span>-${calculateOrderDiscount().toFixed(2)}</span>
+            <span>−${calculateOrderDiscount().toFixed(2)}</span>
           </div>
         )}
         
         {selectedItemId && (
-          <div className="mt-4 border-t border-gray-800 pt-4">
+          <div className="mt-4 pt-2">
             <Button 
               variant="ghost" 
               className="text-pos-gold hover:text-pos-gold/80 p-0"

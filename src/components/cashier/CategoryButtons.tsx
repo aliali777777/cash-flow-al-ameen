@@ -25,11 +25,11 @@ export const CategoryButtons: React.FC<CategoryButtonsProps> = ({
       {categories.map((category) => (
         <Button
           key={category.id}
-          variant={selectedCategory === category.id ? "default" : "outline"}
-          className={`flex flex-col items-center justify-center p-2 h-24 rounded-xl ${
+          variant="outline"
+          className={`flex flex-col items-center justify-center py-3 rounded-lg ${
             selectedCategory === category.id 
-              ? 'bg-pos-gold/20 text-pos-gold border-pos-gold' 
-              : 'bg-black text-pos-gold border-gray-800 hover:bg-gray-900'
+              ? 'bg-pos-gold/10 text-pos-gold border-pos-gold/50' 
+              : 'bg-pos-darkgray text-pos-gold border-gray-800 hover:bg-pos-lightgray'
           }`}
           onClick={() => onSelectCategory(category.id)}
         >

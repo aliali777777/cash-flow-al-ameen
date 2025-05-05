@@ -4,7 +4,6 @@ import { ThemeProvider } from '@/components/ThemeProvider';
 import { getSettings } from '@/utils/storage';
 import { useProductFilter } from './hooks/useProductFilter';
 import { useOrderManagement } from './hooks/useOrderManagement';
-import { OrderHeader } from '@/components/cashier/OrderHeader';
 import { CategoryButtons } from '@/components/cashier/CategoryButtons';
 import { Numpad } from '@/components/cashier/Numpad';
 import CurrentOrderSummary from '@/components/cashier/CurrentOrderSummary';
@@ -18,8 +17,6 @@ import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Sidebar } from '@/components/common/Sidebar';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { X } from 'lucide-react';
 
 const CashierPage = () => {
@@ -29,7 +26,6 @@ const CashierPage = () => {
   const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [itemNote, setItemNote] = useState<string>("");
-  const isMobile = useIsMobile();
   
   const { 
     filteredProducts,
@@ -69,7 +65,7 @@ const CashierPage = () => {
         if (newQuantity > 99) newQuantity = 99; // Limit to reasonable quantity
         
         handleQuantityChange(selectedItemId, newQuantity);
-        toast.success(`تم تعديل الكمية إلى ${newQuantity}`);
+        toast.success(`Quantity updated to ${newQuantity}`);
       }
     } else {
       toast.info("Please select a product first to update quantity");
@@ -185,10 +181,8 @@ const CashierPage = () => {
   };
 
   return (
-    <div className="flex h-screen bg-black overflow-hidden">
-      {!isMobile && <Sidebar className="w-64" />}
-      
-      <ThemeProvider defaultTheme="dark" storageKey="pos-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="pos-theme">
+      <div className="flex h-screen bg-black overflow-hidden">
         <div className="flex-1 flex flex-col h-full bg-black text-white overflow-hidden">
           <div className="absolute top-4 right-4 z-10">
             <Button
@@ -202,9 +196,9 @@ const CashierPage = () => {
           </div>
           
           <div className="flex-1 p-4 overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 h-full">
               {/* Order Summary - Left Side */}
-              <div className="lg:col-span-5 h-full flex flex-col overflow-auto">
+              <div className="lg:col-span-2 h-full flex flex-col overflow-auto">
                 <CurrentOrderSummary
                   order={currentOrder}
                   settings={settings}
@@ -219,7 +213,7 @@ const CashierPage = () => {
               </div>
               
               {/* Categories and Numpad - Right Side */}
-              <div className="lg:col-span-7 h-full flex flex-col">
+              <div className="lg:col-span-3 h-full flex flex-col">
                 <div className="mb-4">
                   <CategoryButtons 
                     onSelectCategory={handleCategoryChange}
@@ -227,7 +221,7 @@ const CashierPage = () => {
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full mt-4">
+                <div className="grid grid-cols-2 gap-4 h-full mt-4">
                   <div className="flex flex-col">
                     <Numpad 
                       onNumberClick={handleNumpadClick} 
@@ -253,7 +247,7 @@ const CashierPage = () => {
             </div>
           </div>
         </div>
-      </ThemeProvider>
+      </div>
       
       {/* Dialogs */}
       <ProductDetailDialog 
@@ -297,7 +291,7 @@ const CashierPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </ThemeProvider>
   );
 };
 

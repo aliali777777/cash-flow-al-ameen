@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
-import Index from '@/pages/index'; // Fixed casing from Index to index
+import IndexPage from '@/pages/index'; // Using a different name to avoid casing issues
 import Login from '@/pages/Login';
 import Admin from '@/pages/Admin';
 import CashierPage from '@/pages/cashier/CashierPage';
@@ -43,7 +43,7 @@ function App() {
           <OrderProvider>
             <ThemeProvider>
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<IndexPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/admin" element={
                   <ProtectedRoute>

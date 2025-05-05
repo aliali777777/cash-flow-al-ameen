@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Dot } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface NumpadProps {
   onNumberClick: (num: number) => void;
@@ -18,31 +18,31 @@ export const Numpad: React.FC<NumpadProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-4 gap-2">
-      {/* Top row */}
+      {/* First row */}
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={() => onNumberClick(1)}
       >
         1
       </Button>
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={() => onNumberClick(3)}
       >
         3
       </Button>
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={() => onNumberClick(3)}
       >
         3
       </Button>
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={() => onNumberClick(6)}
       >
         6
@@ -51,28 +51,28 @@ export const Numpad: React.FC<NumpadProps> = ({
       {/* Second row */}
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={() => onNumberClick(4)}
       >
         4
       </Button>
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={() => onNumberClick(5)}
       >
         5
       </Button>
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={() => onNumberClick(6)}
       >
         6
       </Button>
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={onClear}
       >
         <X className="h-6 w-6" />
@@ -81,59 +81,49 @@ export const Numpad: React.FC<NumpadProps> = ({
       {/* Third row */}
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={() => onNumberClick(7)}
       >
         7
       </Button>
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={() => onNumberClick(8)}
       >
         8
       </Button>
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={() => onNumberClick(9)}
       >
         9
       </Button>
-      <Button
-        variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900 invisible"
-      >
-        
-      </Button>
+      <div className="invisible">
+        <Button variant="outline" className="number-pad-button">
+          
+        </Button>
+      </div>
 
       {/* Fourth row */}
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={() => onNumberClick(0)}
       >
         0
       </Button>
       <Button
         variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900"
+        className="number-pad-button"
         onClick={onDot}
       >
         .
       </Button>
-      <Button
-        variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900 invisible"
-      >
-        
-      </Button>
-      <Button
-        variant="outline"
-        className="aspect-square h-14 text-xl font-bold bg-black text-white border-gray-800 hover:bg-gray-900 invisible"
-      >
-        
-      </Button>
+      <div className="col-span-2">
+        {/* Empty space to match the layout */}
+      </div>
     </div>
   );
 };

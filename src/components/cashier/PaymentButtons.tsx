@@ -1,14 +1,14 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Receipt, Trash2, CirclePercent, ArrowRight, CircleDollarSign, CreditCard, Wallet, Plus, StickyNote } from 'lucide-react';
+import { Trash2, CirclePercent, CircleDollarSign, StickyNote, Printer } from 'lucide-react';
 
 interface PaymentButtonsProps {
   onClearAll: () => void;
   onDiscount: () => void;
   onDeleteItem: () => void;
   onCashPayment: () => void;
-  onCardPayment: () => void;
+  onAddItem: () => void;
   onAddNote: () => void;
   selectedItemExists: boolean;
 }
@@ -18,7 +18,7 @@ export const PaymentButtons: React.FC<PaymentButtonsProps> = ({
   onDiscount, 
   onDeleteItem,
   onCashPayment,
-  onCardPayment,
+  onAddItem,
   onAddNote,
   selectedItemExists 
 }) => {
@@ -27,18 +27,16 @@ export const PaymentButtons: React.FC<PaymentButtonsProps> = ({
       <div className="grid grid-cols-2 gap-2">
         <Button 
           variant="outline" 
-          className="bg-red-500/10 hover:bg-red-500/20 h-14"
+          className="bg-black text-pos-gold border-pos-gold/30 hover:bg-black/90 h-14 rounded-xl"
           onClick={onClearAll}
         >
-          <Trash2 className="h-5 w-5 mr-2" />
           <span className="text-lg">Clear All</span>
         </Button>
         <Button 
           variant="outline" 
-          className="bg-amber-500/10 hover:bg-amber-500/20 h-14"
+          className="bg-black text-pos-gold border-pos-gold/30 hover:bg-black/90 h-14 rounded-xl"
           onClick={onDiscount}
         >
-          <CirclePercent className="h-5 w-5 mr-2" />
           <span className="text-lg">Discount</span>
         </Button>
       </div>
@@ -46,42 +44,33 @@ export const PaymentButtons: React.FC<PaymentButtonsProps> = ({
       <div className="grid grid-cols-2 gap-2">
         <Button 
           variant="outline" 
-          className="bg-blue-500/10 hover:bg-blue-500/20 h-14"
+          className="bg-black text-pos-gold border-pos-gold/30 hover:bg-black/90 h-14 rounded-xl"
           onClick={onDeleteItem}
           disabled={!selectedItemExists}
         >
-          <Trash2 className="h-5 w-5 mr-2" />
-          <span className="text-lg">Delete Item</span>
+          <span className="text-pos-gold mr-2">🔒</span>
+          <span className="text-lg">Delete</span>
         </Button>
         <Button 
           variant="outline" 
-          className="bg-green-500/10 hover:bg-green-500/20 h-14"
-          onClick={onAddNote}
+          className="bg-black text-pos-gold border-pos-gold/30 hover:bg-black/90 h-14 rounded-xl"
+          onClick={onAddItem}
           disabled={!selectedItemExists}
         >
-          <StickyNote className="h-5 w-5 mr-2" />
-          <span className="text-lg">Add Note</span>
+          <span className="text-pos-gold mr-2">🧺</span>
+          <span className="text-lg">Item</span>
         </Button>
       </div>
       
-      <div className="grid grid-cols-2 gap-2">
-        <Button 
-          variant="outline" 
-          className="bg-emerald-500/10 hover:bg-emerald-500/20 h-14"
-          onClick={onCashPayment}
-        >
-          <CircleDollarSign className="h-5 w-5 mr-2" />
-          <span className="text-lg">Cash</span>
-        </Button>
-        <Button 
-          variant="outline" 
-          className="bg-purple-500/10 hover:bg-purple-500/20 h-14"
-          onClick={onCardPayment}
-        >
-          <CreditCard className="h-5 w-5 mr-2" />
-          <span className="text-lg">Card</span>
-        </Button>
-      </div>
+      <Button 
+        variant="default" 
+        className="w-full bg-pos-gold text-black hover:bg-pos-gold/90 h-16 rounded-xl flex items-center justify-center"
+        onClick={onCashPayment}
+      >
+        <span className="text-xl font-bold">Cash</span>
+        <span className="text-lg">&nbsp;& print</span>
+        <Printer className="h-5 w-5 ml-2" />
+      </Button>
     </div>
   );
 };

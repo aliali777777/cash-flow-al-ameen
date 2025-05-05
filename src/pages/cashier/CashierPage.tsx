@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Sidebar } from '@/components/common/Sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { X } from 'lucide-react';
 
 const CashierPage = () => {
   const settings = getSettings();
@@ -71,16 +72,16 @@ const CashierPage = () => {
         toast.success(`تم تعديل الكمية إلى ${newQuantity}`);
       }
     } else {
-      toast.info("الرجاء تحديد منتج أولاً لتعديل الكمية");
+      toast.info("Please select a product first to update quantity");
     }
   };
 
   const handleNumpadClear = () => {
     if (selectedItemId) {
       handleQuantityChange(selectedItemId, 1); // Reset to 1
-      toast.success("تم إعادة تعيين الكمية إلى 1");
+      toast.success("Quantity reset to 1");
     } else {
-      toast.info("الرجاء تحديد منتج أولاً");
+      toast.info("Please select a product first");
     }
   };
 
@@ -88,17 +89,21 @@ const CashierPage = () => {
     if (selectedItemId) {
       handleRemoveItem(selectedItemId);
       setSelectedItemId(null);
-      toast.success("تم حذف المنتج");
+      toast.success("Product removed");
     } else {
-      toast.info("الرجاء تحديد منتج أولاً للحذف");
+      toast.info("Please select a product first to delete");
     }
+  };
+
+  const handleNumpadDot = () => {
+    toast.info("Decimal quantities not supported");
   };
 
   const handleAddNote = () => {
     if (selectedItemId) {
       setIsNoteDialogOpen(true);
     } else {
-      toast.info("الرجاء تحديد منتج أولاً لإضافة ملاحظة");
+      toast.info("Please select a product first to add a note");
     }
   };
 
@@ -119,7 +124,7 @@ const CashierPage = () => {
           handleAddToOrder(updatedItem.quantity, updatedItem.notes || '');
         }, 10);
         
-        toast.success('تم إضافة الملاحظة');
+        toast.success('Note added');
         setIsNoteDialogOpen(false);
       }
     }
@@ -128,9 +133,9 @@ const CashierPage = () => {
   const handleClearAll = () => {
     if (currentOrder && currentOrder.items.length > 0) {
       handleCancelOrder();
-      toast.success("تم مسح جميع المنتجات من السلة");
+      toast.success("All items cleared");
     } else {
-      toast.info("السلة فارغة بالفعل");
+      toast.info("Cart is already empty");
     }
   };
 
@@ -138,9 +143,9 @@ const CashierPage = () => {
     if (selectedItemId) {
       handleRemoveItem(selectedItemId);
       setSelectedItemId(null);
-      toast.success("تم حذف المنتج المحدد");
+      toast.success("Selected item deleted");
     } else {
-      toast.info("الرجاء تحديد منتج أولاً للحذف");
+      toast.info("Please select a product first to delete");
     }
   };
 
@@ -148,29 +153,24 @@ const CashierPage = () => {
     if (currentOrder && currentOrder.items.length > 0) {
       setIsPaymentDialogOpen(true);
     } else {
-      toast.info("الرجاء إضافة منتجات إلى السلة أولاً");
+      toast.info("Please add products to cart first");
     }
   };
 
-  const handleCardPayment = () => {
-    if (currentOrder && currentOrder.items.length > 0) {
-      setIsPaymentDialogOpen(true);
-    } else {
-      toast.info("الرجاء إضافة منتجات إلى السلة أولاً");
-    }
+  const handleAddItem = () => {
+    toast.info("Select a category to view products");
   };
 
   const handleDiscount = () => {
     if (currentOrder && currentOrder.items.length > 0) {
       setIsDiscountDialogOpen(true);
     } else {
-      toast.info("الرجاء إضافة منتجات إلى السلة أولاً لتطبيق الخصم");
+      toast.info("Please add products to cart first to apply discount");
     }
   };
 
   const handleCloseOrder = () => {
-    // This would typically navigate away from the cashier screen
-    toast.success('تم إغلاق الطلب');
+    toast.success('Order closed');
   };
 
   // Select an item when clicked
@@ -181,16 +181,25 @@ const CashierPage = () => {
     } else {
       setItemNote("");
     }
-    toast.info(`تم تحديد ${item.product.name}`);
+    toast.info(`Selected ${item.product.name}`);
   };
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-black overflow-hidden">
       {!isMobile && <Sidebar className="w-64" />}
       
       <ThemeProvider defaultTheme="dark" storageKey="pos-theme">
-        <div className="flex-1 flex flex-col h-full bg-pos-dark text-pos-gold overflow-hidden">
-          <OrderHeader storeName="SHIWOW" onClose={handleCloseOrder} />
+        <div className="flex-1 flex flex-col h-full bg-black text-white overflow-hidden">
+          <div className="absolute top-4 right-4 z-10">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-pos-gold"
+              onClick={handleCloseOrder}
+            >
+              <X className="h-6 w-6" />
+            </Button>
+          </div>
           
           <div className="flex-1 p-4 overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
@@ -205,6 +214,7 @@ const CashierPage = () => {
                   calculateOrderTotal={calculateOrderTotal}
                   calculateOrderDiscount={calculateOrderDiscount}
                   calculateFinalAmount={calculateFinalAmount}
+                  onAddNote={handleAddNote}
                 />
               </div>
               
@@ -213,18 +223,17 @@ const CashierPage = () => {
                 <div className="mb-4">
                   <CategoryButtons 
                     onSelectCategory={handleCategoryChange}
-                    onClearAll={handleClearAll}
-                    onDiscount={handleDiscount}
                     selectedCategory={selectedCategory}
                   />
                 </div>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full mt-4">
                   <div className="flex flex-col">
                     <Numpad 
                       onNumberClick={handleNumpadClick} 
                       onClear={handleNumpadClear}
                       onDelete={handleNumpadDelete}
+                      onDot={handleNumpadDot}
                     />
                   </div>
                   
@@ -234,7 +243,7 @@ const CashierPage = () => {
                       onDiscount={handleDiscount}
                       onDeleteItem={handleDeleteSelected}
                       onCashPayment={handleCashPayment}
-                      onCardPayment={handleCardPayment}
+                      onAddItem={handleAddItem}
                       onAddNote={handleAddNote}
                       selectedItemExists={!!selectedItemId}
                     />
@@ -266,19 +275,25 @@ const CashierPage = () => {
 
       {/* Note Dialog */}
       <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="bg-black border-gray-800 text-white">
           <DialogHeader>
-            <DialogTitle>إضافة ملاحظة للمنتج</DialogTitle>
+            <DialogTitle className="text-pos-gold">Add Note</DialogTitle>
           </DialogHeader>
           <Textarea
             value={itemNote}
             onChange={(e) => setItemNote(e.target.value)}
-            placeholder="اكتب ملاحظتك هنا..."
-            className="min-h-[100px]"
+            placeholder="Type your note here..."
+            className="min-h-[100px] bg-gray-900 border-gray-700 text-white"
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNoteDialogOpen(false)}>إلغاء</Button>
-            <Button onClick={handleSaveNote}>حفظ</Button>
+            <Button variant="outline" onClick={() => setIsNoteDialogOpen(false)} 
+              className="bg-black text-pos-gold border-pos-gold/30 hover:bg-black/90">
+              Cancel
+            </Button>
+            <Button onClick={handleSaveNote} 
+              className="bg-pos-gold text-black hover:bg-pos-gold/90">
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

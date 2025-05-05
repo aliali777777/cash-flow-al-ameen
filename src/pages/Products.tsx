@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/common/Sidebar';
 import { Button } from '@/components/ui/button';
@@ -32,8 +31,6 @@ import {
   Eye,
   EyeOff,
   Package,
-  Category,
-  Survey,
 } from 'lucide-react';
 import { 
   Select,
@@ -411,7 +408,7 @@ const Products = () => {
             <Card className="lg:col-span-2">
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-base">
-                  <Category className="mr-2 h-4 w-4" />
+                  <Package className="mr-2 h-4 w-4" />
                   إدارة التصنيفات
                 </CardTitle>
               </CardHeader>

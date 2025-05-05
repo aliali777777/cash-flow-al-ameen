@@ -8,7 +8,7 @@ import { Numpad } from '@/components/cashier/Numpad';
 import CurrentOrderSummary from '@/components/cashier/CurrentOrderSummary';
 import { PaymentButtons } from '@/components/cashier/PaymentButtons';
 import { ProductDetailDialog } from '@/components/cashier/ProductDetailDialog';
-import { ProductList } from '@/components/cashier/ProductList'; // Import ProductList
+import { ProductList } from '@/components/cashier/ProductList'; 
 import { useOrder } from '@/context/OrderContext';
 import { useProducts } from '@/context/ProductContext';
 import { PaymentDialog } from '@/components/order/PaymentDialog';
@@ -21,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
 
 const CashierPage = () => {
+  
   const settings = getSettings();
   const { availableProducts } = useProducts();
   const [isDiscountDialogOpen, setIsDiscountDialogOpen] = useState(false);
@@ -29,6 +30,7 @@ const CashierPage = () => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [itemNote, setItemNote] = useState<string>("");
   const [showProducts, setShowProducts] = useState(false);
+  const [categoryName, setCategoryName] = useState("");
   
   const { 
     filteredProducts,
@@ -57,10 +59,41 @@ const CashierPage = () => {
 
   const { updateItemQuantity } = useOrder();
 
-  // Modified to show product list
+  // Modified to show product list and set category name
   const handleSelectCategory = (category: string) => {
     handleCategoryChange(category);
     setShowProducts(true);
+    
+    // Find the category name from the categories in CategoryButtons.tsx
+    const categoryNames = [
+      { id: 'croissant', name: 'منتجات كرواسون' },
+      { id: 'coffee', name: 'منتجات كيفة' },
+      { id: 'arabic_sweets', name: 'منتجات حلو عربي' },
+      { id: 'baklava', name: 'منتجات بقلاوة' },
+      { id: 'maamoul', name: 'منتجات معمول' },
+      { id: 'regular_products', name: 'منتجات معمول' },
+      { id: 'frozen', name: 'منتجات مفروكة ومدلوقة' },
+      { id: 'desserts', name: 'معجنات / سنبورة / ...' },
+      { id: 'cake_cups', name: 'منتجات قوالب كيك' },
+      { id: 'cake_slice', name: 'منتجات قطع كيك' },
+      { id: 'food', name: 'منتجات سنكي فود' },
+      { id: 'chocolate', name: 'منتجات شوكولا' },
+      { id: 'bowl', name: 'منتجات كاسة مشكلة' },
+      { id: 'jar', name: 'منتجات برطمان' },
+      { id: 'drinks', name: 'منتجات مشروبات' },
+      { id: 'ramadan', name: 'منتجات رمضانيات' },
+      { id: 'ready', name: 'منتجات جاهزة للبيع' },
+      { id: 'mixed', name: 'منتجات مختلف' },
+      { id: 'bags', name: 'منتجات باعبيت' },
+      { id: 'cheese', name: 'منتجات أجبان وألبان' },
+      { id: 'knafeh', name: 'منتجات معجنات' },
+      { id: 'crepes', name: 'منتجات كريب / وافل / بانكيك' },
+      { id: 'salads', name: 'منتجات سلطات' },
+      { id: 'desserts2', name: 'منتجات معجنات' },
+    ];
+    
+    const foundCategory = categoryNames.find(cat => cat.id === category);
+    setCategoryName(foundCategory ? foundCategory.name : category);
   };
 
   const handleBackToCategories = () => {
@@ -235,29 +268,14 @@ const CashierPage = () => {
               <div className="lg:col-span-3 h-full flex flex-col">
                 {showProducts ? (
                   <div className="mb-4 flex flex-col h-full">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="text-xl font-bold text-pos-gold">{selectedCategory.toUpperCase()} Products</h2>
-                      <Button 
-                        variant="outline" 
-                        className="bg-pos-darkgray text-pos-gold border-gray-800 hover:bg-pos-lightgray"
-                        onClick={handleBackToCategories}
-                      >
-                        Back to Categories
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3 overflow-auto flex-1">
-                      {categoryProducts.map(product => (
-                        <Button
-                          key={product.id}
-                          variant="outline"
-                          className="h-24 flex flex-col items-center justify-center p-2 bg-pos-darkgray text-pos-gold border-gray-800 hover:bg-pos-lightgray"
-                          onClick={() => handleProductClick(product)}
-                        >
-                          <span className="text-sm font-medium mb-2">{product.nameAr || product.name}</span>
-                          <span className="text-xs">{settings.currencySymbol}{product.price.toFixed(2)}</span>
-                        </Button>
-                      ))}
-                    </div>
+                    <ProductList
+                      products={categoryProducts}
+                      onProductSelect={handleProductClick}
+                      onQuickAdd={handleQuickAdd}
+                      settings={settings}
+                      onBackToCategories={handleBackToCategories}
+                      categoryName={categoryName}
+                    />
                   </div>
                 ) : (
                   <div className="mb-4">
@@ -298,7 +316,8 @@ const CashierPage = () => {
         </div>
       </div>
       
-      {/* Dialogs */}
+      
+      
       <ProductDetailDialog 
         product={selectedProduct}
         settings={settings}

@@ -6,13 +6,10 @@ import { Product, Settings } from '@/types';
 interface ProductListProps {
   products: Product[];
   onProductSelect: (product: Product) => void;
-  onQuickAdd: (product: Product) => void;
+  onQuickAdd?: (product: Product) => void;
   settings: Settings;
-  searchQuery: string;
-  onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  selectedCategory: string;
-  onCategoryChange: (category: string) => void;
-  categories: string[];
+  onBackToCategories: () => void;
+  categoryName: string;
 }
 
 export const ProductList = ({
@@ -20,39 +17,35 @@ export const ProductList = ({
   onProductSelect,
   onQuickAdd,
   settings,
-  categories,
-  selectedCategory,
-  onCategoryChange
+  onBackToCategories,
+  categoryName,
 }: ProductListProps) => {
   return (
     <div className="h-full flex flex-col">
-      {/* Categories Grid */}
-      <div className="grid grid-cols-5 gap-2 mb-4">
-        {categories.map(category => (
-          <Button
-            key={category}
-            variant={selectedCategory === category ? "default" : "outline"}
-            onClick={() => onCategoryChange(category)}
-            className="w-full text-sm py-1 h-auto whitespace-normal text-right"
-          >
-            {category === 'all' ? 'الكل' : category}
-          </Button>
-        ))}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold text-pos-gold">{categoryName}</h2>
+        <Button 
+          variant="outline" 
+          className="bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
+          onClick={onBackToCategories}
+        >
+          العودة للأقسام
+        </Button>
       </div>
 
-      {/* Products Grid */}
-      <div className="flex-1 grid grid-cols-3 gap-2 overflow-auto">
+      {/* Products Grid - 4x4 grid similar to the image */}
+      <div className="flex-1 grid grid-cols-4 gap-1 overflow-auto">
         {products.map(product => (
           <Button
             key={product.id}
             variant="outline"
-            className="h-24 flex flex-col items-start p-2 text-right"
+            className="h-24 flex flex-col items-center justify-center p-2 bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
             onClick={() => onProductSelect(product)}
           >
-            <span className="text-sm font-medium">
+            <span className="text-sm font-medium text-right w-full">
               {product.nameAr || product.name}
             </span>
-            <span className="text-xs text-muted-foreground mt-auto">
+            <span className="text-xs text-white/70 mt-auto text-right w-full">
               {settings.currencySymbol}{product.price.toFixed(2)}
             </span>
           </Button>

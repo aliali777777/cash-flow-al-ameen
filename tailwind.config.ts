@@ -57,6 +57,8 @@ export default {
         pos: {
           dark: "#111111",
           gold: "#D4AF37",
+          darkgray: "#222222",   // Added dark gray color
+          lightgray: "#333333",  // Added light gray color
         }
       },
       borderRadius: {

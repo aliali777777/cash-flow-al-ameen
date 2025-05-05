@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Pizza, CircleDollarSign, CupSoda, 
@@ -108,8 +109,10 @@ export const CategoryButtons: React.FC<CategoryButtonsProps> = ({
       {categories.map((category) => (
         <Button
           key={category.id}
-          variant="ghost"
-          className={`pos-icon-button ${selectedCategory === category.id ? 'ring-2 ring-pos-gold' : ''}`}
+          variant={selectedCategory === category.id && !category.action ? "default" : "outline"}
+          className={`flex flex-col items-center justify-center p-2 h-20 ${
+            selectedCategory === category.id && !category.action ? 'bg-primary text-primary-foreground' : 'bg-muted/30'
+          }`}
           onClick={() => {
             if (category.action) {
               category.action();

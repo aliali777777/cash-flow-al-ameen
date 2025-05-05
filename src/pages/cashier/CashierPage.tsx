@@ -7,7 +7,7 @@ import { useOrderManagement } from './hooks/useOrderManagement';
 import { OrderHeader } from '@/components/cashier/OrderHeader';
 import { CategoryButtons } from '@/components/cashier/CategoryButtons';
 import { Numpad } from '@/components/cashier/Numpad';
-import { CurrentOrderSummary } from '@/components/cashier/CurrentOrderSummary';
+import CurrentOrderSummary from '@/components/cashier/CurrentOrderSummary';
 import { PaymentButtons } from '@/components/cashier/PaymentButtons';
 import { ProductDetailDialog } from '@/components/cashier/ProductDetailDialog';
 import { useOrder } from '@/context/OrderContext';

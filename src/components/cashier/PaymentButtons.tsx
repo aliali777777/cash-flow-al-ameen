@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Receipt, Trash2, CirclePercent, ArrowRight, CircleDollarSign, CreditCard, Wallet, Plus, NoteIcon } from 'lucide-react';
+import { Receipt, Trash2, CirclePercent, ArrowRight, CircleDollarSign, CreditCard, Wallet, Plus, StickyNote } from 'lucide-react';
 
 interface PaymentButtonsProps {
   onClearAll: () => void;
@@ -59,7 +59,7 @@ export const PaymentButtons: React.FC<PaymentButtonsProps> = ({
           onClick={onAddNote}
           disabled={!selectedItemExists}
         >
-          <NoteIcon className="h-5 w-5 mr-2" />
+          <StickyNote className="h-5 w-5 mr-2" />
           <span className="text-lg">Add Note</span>
         </Button>
       </div>

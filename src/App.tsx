@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
-import Index from '@/pages/index'; // Using the correct import name
+import Index from '@/pages/Index'; // Using the correct case
 import Login from '@/pages/Login';
 import Admin from '@/pages/Admin';
 import CashierPage from '@/pages/cashier/CashierPage';
@@ -18,6 +18,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ProductProvider } from '@/context/ProductContext';
 import { OrderProvider } from '@/context/OrderContext';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { UserNavigation } from '@/components/common/UserNavigation';
 
 import { initStorage } from '@/utils/storage';
 
@@ -32,7 +33,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" />;
   }
   
-  return <>{children}</>;
+  return (
+    <>
+      <UserNavigation />
+      {children}
+    </>
+  );
 };
 
 function App() {
@@ -43,7 +49,11 @@ function App() {
           <OrderProvider>
             <ThemeProvider>
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                } />
                 <Route path="/login" element={<Login />} />
                 <Route path="/admin" element={
                   <ProtectedRoute>

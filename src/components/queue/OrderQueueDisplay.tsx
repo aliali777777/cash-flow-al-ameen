@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { 
   Table, 
@@ -122,6 +123,16 @@ export const OrderQueueDisplay = () => {
       const diffInMinutes = Math.ceil(diffInMs / (1000 * 60));
       
       return diffInMinutes;
+    }
+    
+    // للطلبات التي في حالة in-progress ولكن بدون وقت محدد، استخدم وقت افتراضي (15 دقيقة)
+    if (order.kitchenStatus === 'in-progress') {
+      return 15; // وقت افتراضي للطلبات قيد التحضير إذا لم يتم تحديد الوقت
+    }
+    
+    // للطلبات الجديدة التي لم تبدأ بعد، استخدم وقت افتراضي (20 دقيقة)
+    if (order.kitchenStatus === 'new') {
+      return 20; // وقت افتراضي للطلبات الجديدة 
     }
     
     // إذا لم يكن هناك وقت تحضير محدد

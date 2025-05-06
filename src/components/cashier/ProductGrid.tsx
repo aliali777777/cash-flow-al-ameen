@@ -34,7 +34,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
         ))
       ) : (
         <div className="col-span-3 flex items-center justify-center h-full">
-          <span className="text-gray-500">No products in this category</span>
+          <span className="text-gray-500">لا توجد منتجات في هذا التصنيف</span>
         </div>
       )}
     </div>

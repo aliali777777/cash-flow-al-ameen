@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { useProducts } from '@/context/ProductContext';
 
 interface CategoryButtonsProps {
   onSelectCategory: (category: string) => void;
@@ -11,50 +12,39 @@ export const CategoryButtons: React.FC<CategoryButtonsProps> = ({
   onSelectCategory,
   selectedCategory
 }) => {
-  // Updated with more Arabic category names from the image
-  const categories = [
-    { id: 'croissant', name: 'منتجات كرواسون' },
-    { id: 'coffee', name: 'منتجات كيفة' },
-    { id: 'arabic_sweets', name: 'منتجات حلو عربي' },
-    { id: 'baklava', name: 'منتجات بقلاوة' },
-    { id: 'maamoul', name: 'منتجات معمول' },
-    { id: 'regular_products', name: 'منتجات معمول' },
-    { id: 'frozen', name: 'منتجات مفروكة ومدلوقة' },
-    { id: 'desserts', name: 'معجنات / سنبورة / ...' },
-    { id: 'cake_cups', name: 'منتجات قوالب كيك' },
-    { id: 'cake_slice', name: 'منتجات قطع كيك' },
-    { id: 'food', name: 'منتجات سنكي فود' },
-    { id: 'chocolate', name: 'منتجات شوكولا' },
-    { id: 'bowl', name: 'منتجات كاسة مشكلة' },
-    { id: 'jar', name: 'منتجات برطمان' },
-    { id: 'drinks', name: 'منتجات مشروبات' },
-    { id: 'ramadan', name: 'منتجات رمضانيات' },
-    { id: 'ready', name: 'منتجات جاهزة للبيع' },
-    { id: 'mixed', name: 'منتجات مختلف' },
-    { id: 'bags', name: 'منتجات باعبيت' },
-    { id: 'cheese', name: 'منتجات أجبان وألبان' },
-    { id: 'knafeh', name: 'منتجات معجنات' },
-    { id: 'crepes', name: 'منتجات كريب / وافل / بانكيك' },
-    { id: 'salads', name: 'منتجات سلطات' },
-    { id: 'desserts2', name: 'منتجات معجنات' },
-  ];
+  const { products } = useProducts();
+  
+  // Extract unique categories from products
+  const categories = React.useMemo(() => {
+    const uniqueCategories = Array.from(new Set(products.map(p => p.category)))
+      .filter(Boolean)
+      .sort();
+      
+    return ['all', ...uniqueCategories];
+  }, [products]);
 
   return (
     <div className="grid grid-cols-3 gap-1 h-full overflow-y-auto">
-      {categories.map((category) => (
-        <Button
-          key={category.id}
-          variant="outline"
-          className={`h-24 flex items-center justify-center py-3 rounded-md text-right ${
-            selectedCategory === category.id 
-              ? 'bg-amber-500 text-black border-amber-700' 
-              : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
-          }`}
-          onClick={() => onSelectCategory(category.id)}
-        >
-          <span className="text-sm text-center">{category.name}</span>
-        </Button>
-      ))}
+      {categories.length > 0 ? (
+        categories.map((category) => (
+          <Button
+            key={category}
+            variant="outline"
+            className={`h-24 flex items-center justify-center py-3 rounded-md text-right ${
+              selectedCategory === category 
+                ? 'bg-amber-500 text-black border-amber-700' 
+                : 'bg-gray-800 text-white border-gray-700 hover:bg-gray-700'
+            }`}
+            onClick={() => onSelectCategory(category)}
+          >
+            <span className="text-sm text-center">{category === 'all' ? 'كل المنتجات' : category}</span>
+          </Button>
+        ))
+      ) : (
+        <div className="col-span-3 flex items-center justify-center h-full">
+          <span className="text-gray-500">لا توجد تصنيفات متاحة</span>
+        </div>
+      )}
     </div>
   );
 };

@@ -10,6 +10,7 @@ import CashierPage from '@/pages/cashier/CashierPage';
 import Products from '@/pages/Products';
 import Settings from '@/pages/Settings';
 import Index from '@/pages/Index'; // Import with correct capitalization
+import Admin from '@/pages/Admin'; // Import Admin page
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
               <Route path="/cashier" element={<ProtectedRoute><CashierPage /></ProtectedRoute>} />
               <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             </Routes>
           </Router>
         </OrderProvider>

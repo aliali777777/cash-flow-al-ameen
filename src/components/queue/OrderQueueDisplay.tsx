@@ -101,27 +101,31 @@ export const OrderQueueDisplay = () => {
     }
   };
   
-  // Calculate expected wait time in minutes
-  const getExpectedWaitTime = (order: Order): number => {
+  // تم تعديل هذه الدالة لاستخدام الوقت المتوقع من المطبخ بدلاً من الحساب التلقائي
+  const getExpectedWaitTime = (order: Order): number | string => {
     if (order.status === 'completed' || order.kitchenStatus === 'delivered' || order.kitchenStatus === 'ready') {
       return 0; // Already done
     }
     
-    // Calculate based on number of items and complexity
-    const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
-    let baseTime = Math.min(5 + (itemCount * 2), 30); // Base time calculation
-    
-    // If there's an estimated completion time, use that instead
+    // إذا كان هناك وقت متوقع محدد من المطبخ، نستخدمه
     if (order.estimatedCompletionTime) {
       const completionTime = new Date(order.estimatedCompletionTime);
-      const creationTime = new Date(order.createdAt);
-      const diffInMs = completionTime.getTime() - creationTime.getTime();
+      const currentTime = new Date();
+      
+      // إذا كان الوقت المتوقع قد انتهى بالفعل
+      if (completionTime < currentTime) {
+        return "قريبًا"; // سيكون جاهز قريبًا
+      }
+      
+      // حساب الفرق بالدقائق
+      const diffInMs = completionTime.getTime() - currentTime.getTime();
       const diffInMinutes = Math.ceil(diffInMs / (1000 * 60));
       
-      baseTime = diffInMinutes;
+      return diffInMinutes;
     }
     
-    return baseTime;
+    // إذا لم يكن هناك وقت متوقع محدد، نعرض "غير محدد"
+    return "غير محدد";
   };
 
   return (
@@ -163,15 +167,15 @@ export const OrderQueueDisplay = () => {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-center">
-                    {getExpectedWaitTime(order) > 0 ? (
+                    {getExpectedWaitTime(order) === 0 ? (
+                      <span className="text-green-600 font-medium">جاهز للاستلام</span>
+                    ) : typeof getExpectedWaitTime(order) === 'number' ? (
                       <div className="flex items-center justify-center gap-1">
                         <Clock className="h-5 w-5" />
                         <span>{getExpectedWaitTime(order)}</span>
                       </div>
-                    ) : order.kitchenStatus === 'ready' || order.status === 'completed' ? (
-                      <span className="text-green-600 font-medium">جاهز للاستلام</span>
                     ) : (
-                      <span>--</span>
+                      <span className="text-muted-foreground">{getExpectedWaitTime(order)}</span>
                     )}
                   </TableCell>
                   <TableCell className="text-center">

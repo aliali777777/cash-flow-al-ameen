@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { 
   Table, 
@@ -101,30 +100,31 @@ export const OrderQueueDisplay = () => {
     }
   };
   
-  // تم تعديل هذه الدالة لاستخدام الوقت المتوقع من المطبخ بدلاً من الحساب التلقائي
+  // استخدام وقت التحضير المحدد من قبل المطبخ
   const getExpectedWaitTime = (order: Order): number | string => {
+    // إذا كان الطلب جاهز أو مكتمل، لا وقت للانتظار
     if (order.status === 'completed' || order.kitchenStatus === 'delivered' || order.kitchenStatus === 'ready') {
-      return 0; // Already done
+      return 0;
     }
     
-    // إذا كان هناك وقت متوقع محدد من المطبخ، نستخدمه
+    // استخدام وقت التحضير المحدد مباشرةً من المطبخ
     if (order.estimatedCompletionTime) {
       const completionTime = new Date(order.estimatedCompletionTime);
       const currentTime = new Date();
       
       // إذا كان الوقت المتوقع قد انتهى بالفعل
       if (completionTime < currentTime) {
-        return "قريبًا"; // سيكون جاهز قريبًا
+        return "قريباً";
       }
       
-      // حساب الفرق بالدقائق
+      // حساب الفرق بالدقائق - بالضبط كما حدده المطبخ
       const diffInMs = completionTime.getTime() - currentTime.getTime();
       const diffInMinutes = Math.ceil(diffInMs / (1000 * 60));
       
       return diffInMinutes;
     }
     
-    // إذا لم يكن هناك وقت متوقع محدد، نعرض "غير محدد"
+    // إذا لم يكن هناك وقت تحضير محدد
     return "غير محدد";
   };
 

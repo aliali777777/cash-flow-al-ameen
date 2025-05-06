@@ -9,7 +9,7 @@ import Kitchen from '@/pages/Kitchen';
 import CashierPage from '@/pages/cashier/CashierPage';
 import Products from '@/pages/Products';
 import Settings from '@/pages/Settings';
-import index from '@/pages/index'; // Fixed the casing here
+import Index from '@/pages/index'; // Import with correct casing
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 function App() {
@@ -21,7 +21,7 @@ function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               
-              <Route path="/" element={<ProtectedRoute><index /></ProtectedRoute>} />
+              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
               <Route path="/kitchen" element={<ProtectedRoute><Kitchen /></ProtectedRoute>} />
               <Route path="/cashier" element={<ProtectedRoute><CashierPage /></ProtectedRoute>} />
               <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />

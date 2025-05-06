@@ -1,102 +1,43 @@
-
-import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'sonner';
-
-import Index from '@/pages/index'; // Fixed casing issue
-import Login from '@/pages/Login';
-import Admin from '@/pages/Admin';
-import CashierPage from '@/pages/cashier/CashierPage';
-import Kitchen from '@/pages/Kitchen';
-import Products from '@/pages/Products';
-import Reports from '@/pages/Reports';
-import Settings from '@/pages/Settings';
-import NotFound from '@/pages/NotFound';
-import CustomerQueue from '@/pages/CustomerQueue';
-
-import { AuthProvider, useAuth } from '@/context/AuthContext';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from '@/context/AuthContext';
 import { ProductProvider } from '@/context/ProductContext';
 import { OrderProvider } from '@/context/OrderContext';
-import { ThemeProvider } from '@/components/ThemeProvider';
-import { LanguageProvider } from '@/context/LanguageContext';
-import { UserNavigation } from '@/components/common/UserNavigation';
-
-import { initStorage } from '@/utils/storage';
-
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { currentUser } = useAuth();
-  
-  useEffect(() => {
-    initStorage();
-  }, []);
-  
-  if (!currentUser) {
-    return <Navigate to="/login" />;
-  }
-  
-  return (
-    <>
-      <UserNavigation />
-      {children}
-    </>
-  );
-};
+import Login from '@/pages/Login';
+import Kitchen from '@/pages/Kitchen';
+import CashierPage from '@/pages/cashier/CashierPage';
+import Orders from '@/pages/Orders';
+import Products from '@/pages/Products';
+import Categories from '@/pages/Categories';
+import Settings from '@/pages/Settings';
+import Users from '@/pages/Users';
+import Queue from '@/pages/Queue';
+import Index from '@/pages/Index'; // Fix casing to match the actual file
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <ProductProvider>
-          <OrderProvider>
-            <LanguageProvider>
-              <ThemeProvider>
-                <Routes>
-                  <Route path="/" element={
-                    <ProtectedRoute>
-                      <Index />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/admin" element={
-                    <ProtectedRoute>
-                      <Admin />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/cashier" element={
-                    <ProtectedRoute>
-                      <CashierPage />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/kitchen" element={
-                    <ProtectedRoute>
-                      <Kitchen />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/products" element={
-                    <ProtectedRoute>
-                      <Products />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/reports" element={
-                    <ProtectedRoute>
-                      <Reports />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/settings" element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/queue" element={<CustomerQueue />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-                <Toaster />
-              </ThemeProvider>
-            </LanguageProvider>
-          </OrderProvider>
-        </ProductProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <ProductProvider>
+        <OrderProvider>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              
+              <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+              <Route path="/kitchen" element={<ProtectedRoute><Kitchen /></ProtectedRoute>} />
+              <Route path="/cashier" element={<ProtectedRoute><CashierPage /></ProtectedRoute>} />
+              <Route path="/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+              <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+              <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+              <Route path="/queue" element={<ProtectedRoute><Queue /></ProtectedRoute>} />
+            </Routes>
+          </Router>
+        </OrderProvider>
+      </ProductProvider>
+    </AuthProvider>
   );
 }
 

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
 import { getSettings } from '@/utils/storage';
-import { Clock, CheckCircle2, X, AlertCircle } from 'lucide-react';
+import { Clock, CheckCircle2, X, AlertCircle, FileText } from 'lucide-react';
 import { KitchenOrderStatus, Order } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -197,9 +197,15 @@ const Kitchen = () => {
                               <Badge variant="secondary" className="w-6 h-6 rounded-full p-0 flex items-center justify-center">
                                 {item.quantity}
                               </Badge>
-                              <span className="font-medium rtl">
-                                {item.product.nameAr || item.product.name}
-                              </span>
+                              <div className="font-medium rtl">
+                                <span>{item.product.nameAr || item.product.name}</span>
+                                {item.notes && (
+                                  <div className="flex items-center gap-1 text-amber-500 text-sm mt-0.5">
+                                    <FileText size={12} />
+                                    <span>{item.notes}</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             {settings.showPriceOnKitchenDisplay && (
                               <span className="text-muted-foreground">
@@ -304,15 +310,16 @@ const Kitchen = () => {
                               <Badge variant="secondary" className="w-6 h-6 rounded-full p-0 flex items-center justify-center">
                                 {item.quantity}
                               </Badge>
-                              <span className="font-medium rtl">
-                                {item.product.nameAr || item.product.name}
-                              </span>
+                              <div className="font-medium rtl">
+                                <span>{item.product.nameAr || item.product.name}</span>
+                                {item.notes && (
+                                  <div className="flex items-center gap-1 text-amber-500 text-sm mt-0.5">
+                                    <FileText size={12} />
+                                    <span>{item.notes}</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            {item.notes && (
-                              <span className="text-sm text-muted-foreground">
-                                {item.notes}
-                              </span>
-                            )}
                           </div>
                         ))}
                       </div>
@@ -377,13 +384,26 @@ const Kitchen = () => {
                               <Badge variant="secondary" className="w-6 h-6 rounded-full p-0 flex items-center justify-center">
                                 {item.quantity}
                               </Badge>
-                              <span className="font-medium rtl">
-                                {item.product.nameAr || item.product.name}
-                              </span>
+                              <div className="font-medium rtl">
+                                <span>{item.product.nameAr || item.product.name}</span>
+                                {item.notes && (
+                                  <div className="flex items-center gap-1 text-amber-500 text-sm mt-0.5">
+                                    <FileText size={12} />
+                                    <span>{item.notes}</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
+                      
+                      {order.notes && (
+                        <div className="mt-3 p-2 bg-yellow-50 text-yellow-800 rounded-md rtl">
+                          <div className="font-medium">ملاحظات:</div>
+                          <div>{order.notes}</div>
+                        </div>
+                      )}
                     </CardContent>
                     
                     <CardFooter className="pt-2">

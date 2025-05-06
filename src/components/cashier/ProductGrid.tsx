@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Product, Settings } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
+import { FileText } from 'lucide-react';
 
 interface ProductGridProps {
   products: Product[];
@@ -33,6 +34,11 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             <span className="text-xs text-white/70 mt-auto text-right w-full">
               {settings.currencySymbol}{product.price.toFixed(2)}
             </span>
+            {product.description && (
+              <span className="absolute top-1 left-1">
+                <FileText size={12} className="text-amber-400" />
+              </span>
+            )}
           </Button>
         ))
       ) : (

@@ -9,7 +9,7 @@ import Kitchen from '@/pages/Kitchen';
 import CashierPage from '@/pages/cashier/CashierPage';
 import Products from '@/pages/Products';
 import Settings from '@/pages/Settings';
-import Index from '@/pages/index'; // Import with correct casing
+import Index from '@/pages/Index'; // Import with correct capitalization
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 function App() {

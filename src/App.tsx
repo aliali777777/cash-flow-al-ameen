@@ -11,6 +11,8 @@ import Products from '@/pages/Products';
 import Settings from '@/pages/Settings';
 import Index from '@/pages/Index'; // Import with correct capitalization
 import Admin from '@/pages/Admin'; // Import Admin page
+import CustomerQueue from '@/pages/CustomerQueue'; // Import CustomerQueue page
+import Reports from '@/pages/Reports'; // Import Reports page
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 function App() {
@@ -28,6 +30,8 @@ function App() {
               <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+              <Route path="/queue" element={<CustomerQueue />} /> {/* Added CustomerQueue route without protection */}
+              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} /> {/* Added Reports route */}
             </Routes>
           </Router>
         </OrderProvider>

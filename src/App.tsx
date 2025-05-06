@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 
-import Index from '@/pages/Index'; // Fixed casing issue
+import Index from '@/pages/index'; // Fixed casing issue
 import Login from '@/pages/Login';
 import Admin from '@/pages/Admin';
 import CashierPage from '@/pages/cashier/CashierPage';
@@ -18,6 +18,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ProductProvider } from '@/context/ProductContext';
 import { OrderProvider } from '@/context/OrderContext';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { LanguageProvider } from '@/context/LanguageContext';
 import { UserNavigation } from '@/components/common/UserNavigation';
 
 import { initStorage } from '@/utils/storage';
@@ -47,49 +48,51 @@ function App() {
       <AuthProvider>
         <ProductProvider>
           <OrderProvider>
-            <ThemeProvider>
-              <Routes>
-                <Route path="/" element={
-                  <ProtectedRoute>
-                    <Index />
-                  </ProtectedRoute>
-                } />
-                <Route path="/login" element={<Login />} />
-                <Route path="/admin" element={
-                  <ProtectedRoute>
-                    <Admin />
-                  </ProtectedRoute>
-                } />
-                <Route path="/cashier" element={
-                  <ProtectedRoute>
-                    <CashierPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/kitchen" element={
-                  <ProtectedRoute>
-                    <Kitchen />
-                  </ProtectedRoute>
-                } />
-                <Route path="/products" element={
-                  <ProtectedRoute>
-                    <Products />
-                  </ProtectedRoute>
-                } />
-                <Route path="/reports" element={
-                  <ProtectedRoute>
-                    <Reports />
-                  </ProtectedRoute>
-                } />
-                <Route path="/settings" element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                } />
-                <Route path="/queue" element={<CustomerQueue />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <Toaster />
-            </ThemeProvider>
+            <LanguageProvider>
+              <ThemeProvider>
+                <Routes>
+                  <Route path="/" element={
+                    <ProtectedRoute>
+                      <Index />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/admin" element={
+                    <ProtectedRoute>
+                      <Admin />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/cashier" element={
+                    <ProtectedRoute>
+                      <CashierPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/kitchen" element={
+                    <ProtectedRoute>
+                      <Kitchen />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/products" element={
+                    <ProtectedRoute>
+                      <Products />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/reports" element={
+                    <ProtectedRoute>
+                      <Reports />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/settings" element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/queue" element={<CustomerQueue />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                <Toaster />
+              </ThemeProvider>
+            </LanguageProvider>
           </OrderProvider>
         </ProductProvider>
       </AuthProvider>

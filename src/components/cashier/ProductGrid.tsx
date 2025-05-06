@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Product, Settings } from '@/types';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface ProductGridProps {
   products: Product[];
@@ -14,6 +15,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   onProductClick,
   settings 
 }) => {
+  const { t } = useLanguage();
+  
   return (
     <div className="grid grid-cols-3 gap-1 h-full overflow-y-auto">
       {products.length > 0 ? (
@@ -34,7 +37,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
         ))
       ) : (
         <div className="col-span-3 flex items-center justify-center h-full">
-          <span className="text-gray-500">لا توجد منتجات في هذا التصنيف</span>
+          <span className="text-gray-500">{t('no_products_in_category')}</span>
         </div>
       )}
     </div>

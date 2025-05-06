@@ -10,42 +10,45 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { getSettings, updateSettings } from '@/utils/storage';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import { PERMISSIONS } from '@/types';
 import { toast } from 'sonner';
 import {
   Save,
   Settings as SettingsIcon,
   Printer,
-  Receipt,
-  Languages,
-  DollarSign,
-  Tag,
+  Globe,
   Store,
   X
 } from 'lucide-react';
 
 const Settings = () => {
   const { hasPermission } = useAuth();
-  const canManageSettings = hasPermission(PERMISSIONS.MANAGE_SETTINGS); // Now using the correct permission
+  const { language, setLanguage, t } = useLanguage();
+  const canManageSettings = hasPermission(PERMISSIONS.MANAGE_SETTINGS);
   
   const [settings, setSettings] = useState(getSettings());
   
   const handleSaveSettings = () => {
     if (!canManageSettings) {
-      toast.error('لا تملك صلاحية تعديل الإعدادات');
+      toast.error(t('no_permission'));
       return;
     }
     
     try {
       updateSettings(settings);
-      toast.success('تم حفظ الإعدادات بنجاح');
+      toast.success(t('settings_saved'));
     } catch (error) {
       console.error('Failed to save settings:', error);
-      toast.error('حدث خطأ أثناء حفظ الإعدادات');
+      toast.error(t('settings_error'));
     }
   };
   
   const handleChange = (key: string, value: any) => {
+    if (key === 'language') {
+      setLanguage(value as 'ar' | 'en');
+    }
+    
     setSettings(prev => ({
       ...prev,
       [key]: value
@@ -61,7 +64,7 @@ const Settings = () => {
           <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
             <Sidebar className="lg:hidden" />
             <div className="flex-1">
-              <h1 className="text-lg font-semibold">الإعدادات</h1>
+              <h1 className="text-lg font-semibold">{t('settings')}</h1>
             </div>
           </header>
           
@@ -69,9 +72,9 @@ const Settings = () => {
             <Card className="w-full max-w-md">
               <CardHeader className="text-center">
                 <X className="mx-auto h-10 w-10 text-destructive" />
-                <CardTitle>غير مصرح</CardTitle>
+                <CardTitle>{t('unauthorized')}</CardTitle>
                 <CardDescription>
-                  ليس لديك صلاحية الوصول إلى إعدادات النظام
+                  {t('no_access')}
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -89,21 +92,21 @@ const Settings = () => {
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
           <Sidebar className="lg:hidden" />
           <div className="flex-1">
-            <h1 className="text-lg font-semibold">الإعدادات</h1>
+            <h1 className="text-lg font-semibold">{t('settings')}</h1>
           </div>
           
           <Button onClick={handleSaveSettings}>
             <Save className="ml-2 h-4 w-4" />
-            حفظ الإعدادات
+            {t('save_settings')}
           </Button>
         </header>
         
         <main className="flex-1 overflow-auto p-4">
           <Tabs defaultValue="general" className="w-full">
             <TabsList className="mb-4">
-              <TabsTrigger value="general">عام</TabsTrigger>
-              <TabsTrigger value="printing">الطباعة</TabsTrigger>
-              <TabsTrigger value="business">معلومات المتجر</TabsTrigger>
+              <TabsTrigger value="general">{t('general')}</TabsTrigger>
+              <TabsTrigger value="printing">{t('printing')}</TabsTrigger>
+              <TabsTrigger value="business">{t('business')}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="general" className="space-y-4">
@@ -111,16 +114,16 @@ const Settings = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <SettingsIcon className="h-5 w-5" />
-                    إعدادات عامة
+                    {t('general_settings')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-4">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="autoPrintReceipt" className="flex flex-col space-y-1">
-                        <span>طباعة تلقائية للفواتير</span>
+                        <span>{t('auto_print_receipt')}</span>
                         <span className="font-normal text-sm text-muted-foreground">
-                          طباعة الفاتورة تلقائياً عند إتمام الطلب
+                          {t('auto_print_receipt_desc')}
                         </span>
                       </Label>
                       <Switch 
@@ -132,9 +135,9 @@ const Settings = () => {
                     
                     <div className="flex items-center justify-between">
                       <Label htmlFor="autoKitchenPrint" className="flex flex-col space-y-1">
-                        <span>طباعة تلقائية للمطبخ</span>
+                        <span>{t('auto_kitchen_print')}</span>
                         <span className="font-normal text-sm text-muted-foreground">
-                          إرسال الطلب تلقائياً للطباعة في المطبخ
+                          {t('auto_kitchen_print_desc')}
                         </span>
                       </Label>
                       <Switch 
@@ -146,9 +149,9 @@ const Settings = () => {
                     
                     <div className="flex items-center justify-between">
                       <Label htmlFor="showPriceOnKitchenDisplay" className="flex flex-col space-y-1">
-                        <span>عرض الأسعار في شاشة المطبخ</span>
+                        <span>{t('show_price_kitchen')}</span>
                         <span className="font-normal text-sm text-muted-foreground">
-                          عرض أسعار المنتجات في شاشة المطبخ
+                          {t('show_price_kitchen_desc')}
                         </span>
                       </Label>
                       <Switch 
@@ -160,27 +163,27 @@ const Settings = () => {
                     
                     <div className="flex items-center justify-between">
                       <Label htmlFor="language" className="flex flex-col space-y-1">
-                        <span>لغة البرنامج</span>
+                        <span>{t('app_language')}</span>
                         <span className="font-normal text-sm text-muted-foreground">
-                          اختر لغة واجهة المستخدم
+                          {t('app_language_desc')}
                         </span>
                       </Label>
                       <Select 
-                        value={settings.language}
+                        value={language}
                         onValueChange={(value) => handleChange('language', value)}
                       >
                         <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="اختر اللغة" />
+                          <SelectValue placeholder={t('choose_language')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ar">العربية</SelectItem>
-                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="ar">{t('arabic')}</SelectItem>
+                          <SelectItem value="en">{t('english')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div className="grid gap-2">
-                      <Label htmlFor="currencySymbol">رمز العملة</Label>
+                      <Label htmlFor="currencySymbol">{t('currency_symbol')}</Label>
                       <Input 
                         id="currencySymbol"
                         placeholder="$"
@@ -199,45 +202,45 @@ const Settings = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Printer className="h-5 w-5" />
-                    إعدادات الطباعة
+                    {t('printing_settings')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="receiptPrinter">طابعة الفواتير</Label>
+                      <Label htmlFor="receiptPrinter">{t('receipt_printer')}</Label>
                       <Select 
                         value={settings.receiptPrinter || ''}
                         onValueChange={(value) => handleChange('receiptPrinter', value)}
                       >
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="اختر طابعة" />
+                          <SelectValue placeholder={t('choose_printer')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="default">الطابعة الافتراضية</SelectItem>
-                          <SelectItem value="thermal">طابعة حرارية</SelectItem>
+                          <SelectItem value="default">{t('default_printer')}</SelectItem>
+                          <SelectItem value="thermal">{t('thermal_printer')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div className="grid gap-2">
-                      <Label htmlFor="kitchenPrinter">طابعة المطبخ</Label>
+                      <Label htmlFor="kitchenPrinter">{t('kitchen_printer')}</Label>
                       <Select 
                         value={settings.kitchenPrinter || ''}
                         onValueChange={(value) => handleChange('kitchenPrinter', value)}
                       >
                         <SelectTrigger className="w-full">
-                          <SelectValue placeholder="اختر طابعة" />
+                          <SelectValue placeholder={t('choose_printer')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="default">الطابعة الافتراضية</SelectItem>
-                          <SelectItem value="thermal">طابعة حرارية</SelectItem>
+                          <SelectItem value="default">{t('default_printer')}</SelectItem>
+                          <SelectItem value="thermal">{t('thermal_printer')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div className="grid gap-2">
-                      <Label htmlFor="receiptWidth">عرض الفاتورة (مم)</Label>
+                      <Label htmlFor="receiptWidth">{t('receipt_width')}</Label>
                       <Input 
                         id="receiptWidth"
                         type="number"
@@ -250,7 +253,7 @@ const Settings = () => {
                     
                     <div className="flex items-center justify-between">
                       <Label htmlFor="showLogo" className="flex flex-col space-y-1">
-                        <span>عرض الشعار في الفاتورة</span>
+                        <span>{t('show_logo')}</span>
                       </Label>
                       <Switch 
                         id="showLogo"
@@ -268,43 +271,43 @@ const Settings = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Store className="h-5 w-5" />
-                    معلومات المتجر
+                    {t('business_info')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="businessName">اسم المتجر</Label>
+                      <Label htmlFor="businessName">{t('business_name')}</Label>
                       <Input 
                         id="businessName"
-                        placeholder="اسم المتجر"
+                        placeholder={t('business_name')}
                         value={settings.businessName || ''}
                         onChange={(e) => handleChange('businessName', e.target.value)}
                       />
                     </div>
                     
                     <div className="grid gap-2">
-                      <Label htmlFor="businessAddress">عنوان المتجر</Label>
+                      <Label htmlFor="businessAddress">{t('business_address')}</Label>
                       <Input 
                         id="businessAddress"
-                        placeholder="عنوان المتجر"
+                        placeholder={t('business_address')}
                         value={settings.businessAddress || ''}
                         onChange={(e) => handleChange('businessAddress', e.target.value)}
                       />
                     </div>
                     
                     <div className="grid gap-2">
-                      <Label htmlFor="businessPhone">رقم الهاتف</Label>
+                      <Label htmlFor="businessPhone">{t('business_phone')}</Label>
                       <Input 
                         id="businessPhone"
-                        placeholder="رقم الهاتف"
+                        placeholder={t('business_phone')}
                         value={settings.businessPhone || ''}
                         onChange={(e) => handleChange('businessPhone', e.target.value)}
                       />
                     </div>
                     
                     <div className="grid gap-2">
-                      <Label htmlFor="taxRate">نسبة الضريبة (%)</Label>
+                      <Label htmlFor="taxRate">{t('tax_rate')}</Label>
                       <Input 
                         id="taxRate"
                         type="number"
@@ -316,7 +319,7 @@ const Settings = () => {
                     </div>
                     
                     <div className="grid gap-2">
-                      <Label htmlFor="receiptFooter">نص أسفل الفاتورة</Label>
+                      <Label htmlFor="receiptFooter">{t('receipt_footer')}</Label>
                       <Input 
                         id="receiptFooter"
                         placeholder="شكراً لزيارتكم"

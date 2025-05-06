@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useProducts } from '@/context/ProductContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface CategoryButtonsProps {
   onSelectCategory: (category: string) => void;
@@ -13,6 +14,7 @@ export const CategoryButtons: React.FC<CategoryButtonsProps> = ({
   selectedCategory
 }) => {
   const { products } = useProducts();
+  const { t } = useLanguage();
   
   // Extract unique categories from products
   const categories = React.useMemo(() => {
@@ -37,12 +39,12 @@ export const CategoryButtons: React.FC<CategoryButtonsProps> = ({
             }`}
             onClick={() => onSelectCategory(category)}
           >
-            <span className="text-sm text-center">{category === 'all' ? 'كل المنتجات' : category}</span>
+            <span className="text-sm text-center">{category === 'all' ? t('all_products') : category}</span>
           </Button>
         ))
       ) : (
         <div className="col-span-3 flex items-center justify-center h-full">
-          <span className="text-gray-500">لا توجد تصنيفات متاحة</span>
+          <span className="text-gray-500">{t('no_categories_available')}</span>
         </div>
       )}
     </div>

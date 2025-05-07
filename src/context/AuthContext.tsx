@@ -52,13 +52,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    // Ensure we clear all user state completely
+    // Clear all user state
     setUser(null);
     setIsAuthenticated(false);
     clearCurrentUser();
     
-    // Force a page refresh to ensure all components update properly
-    // This helps with navigation issues between pages
+    // Force a clean navigation to login page
     window.location.href = '/login';
   };
 

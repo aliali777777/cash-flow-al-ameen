@@ -10,19 +10,19 @@ const Index = () => {
   
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/login', { replace: true });
       return;
     }
     
     // Redirect based on user role
     if (currentUser?.role === 'admin') {
-      navigate('/admin');
+      navigate('/admin', { replace: true });
       toast.success(`مرحباً ${currentUser.username}، تم تسجيل الدخول بنجاح`);
     } else if (currentUser?.role === 'kitchen') {
-      navigate('/kitchen');
+      navigate('/kitchen', { replace: true });
       toast.success(`مرحباً ${currentUser.username}، تم تسجيل الدخول بنجاح`);
     } else {
-      navigate('/cashier');
+      navigate('/cashier', { replace: true });
       toast.success(`مرحباً ${currentUser.username}، تم تسجيل الدخول بنجاح`);
     }
   }, [isAuthenticated, currentUser, navigate]);

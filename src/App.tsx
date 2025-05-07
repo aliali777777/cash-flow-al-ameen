@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { AuthProvider } from '@/context/AuthContext';
 import { ProductProvider } from '@/context/ProductContext';
 import { OrderProvider } from '@/context/OrderContext';
@@ -9,11 +9,12 @@ import Kitchen from '@/pages/Kitchen';
 import CashierPage from '@/pages/cashier/CashierPage';
 import Products from '@/pages/Products';
 import Settings from '@/pages/Settings';
-import Index from '@/pages/Index'; // Import with correct capitalization
-import Admin from '@/pages/Admin'; // Import Admin page
-import CustomerQueue from '@/pages/CustomerQueue'; // Import CustomerQueue page
-import Reports from '@/pages/Reports'; // Import Reports page
+import Index from '@/pages/Index';
+import Admin from '@/pages/Admin';
+import CustomerQueue from '@/pages/CustomerQueue';
+import Reports from '@/pages/Reports';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { Toaster } from 'sonner';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
       <ProductProvider>
         <OrderProvider>
           <Router>
+            <Toaster position="top-center" richColors />
             <Routes>
               <Route path="/login" element={<Login />} />
               
@@ -30,8 +32,11 @@ function App() {
               <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
-              <Route path="/queue" element={<CustomerQueue />} /> {/* Added CustomerQueue route without protection */}
-              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} /> {/* Added Reports route */}
+              <Route path="/queue" element={<CustomerQueue />} />
+              <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+              
+              {/* Add a catch-all route */}
+              <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </Router>
         </OrderProvider>

@@ -16,7 +16,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     // Log navigation to help with debugging
     console.log(`Navigation to: ${location.pathname}, authenticated: ${isAuthenticated}`);
     
-    // Show a toast when user successfully accesses a protected page
     if (isAuthenticated && currentUser) {
       console.log("User authenticated:", currentUser.username);
     }
@@ -24,6 +23,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   
   if (!isAuthenticated) {
     console.log("Not authenticated, redirecting to login");
+    // Pass the current location so we can redirect back after login
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
   

@@ -18,11 +18,11 @@ import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { UserRole } from '@/types';
+import { UserRole, PERMISSIONS } from '@/types';
 
 export function Sidebar({ className }: { className?: string }) {
   const { pathname } = useLocation();
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, hasPermission } = useAuth();
   const navigate = useNavigate();
   
   const nav = [
@@ -32,6 +32,7 @@ export function Sidebar({ className }: { className?: string }) {
       path: '/',
       icon: HomeIcon,
       roles: [UserRole.ADMIN, UserRole.CASHIER, UserRole.KITCHEN],
+      permission: null,
     },
     {
       name: 'Cashier',
@@ -39,6 +40,7 @@ export function Sidebar({ className }: { className?: string }) {
       path: '/cashier',
       icon: ReceiptIcon,
       roles: [UserRole.ADMIN, UserRole.CASHIER],
+      permission: PERMISSIONS.CREATE_ORDERS,
     },
     {
       name: 'Kitchen',
@@ -46,6 +48,7 @@ export function Sidebar({ className }: { className?: string }) {
       path: '/kitchen',
       icon: UtensilsCrossedIcon,
       roles: [UserRole.ADMIN, UserRole.KITCHEN],
+      permission: PERMISSIONS.KITCHEN_DISPLAY,
     },
     {
       name: 'Products',
@@ -53,6 +56,7 @@ export function Sidebar({ className }: { className?: string }) {
       path: '/products',
       icon: PackageIcon,
       roles: [UserRole.ADMIN],
+      permission: PERMISSIONS.MANAGE_PRODUCTS,
     },
     {
       name: 'Reports',
@@ -60,6 +64,7 @@ export function Sidebar({ className }: { className?: string }) {
       path: '/reports',
       icon: AreaChartIcon,
       roles: [UserRole.ADMIN],
+      permission: PERMISSIONS.VIEW_REPORTS,
     },
     {
       name: 'Users',
@@ -67,6 +72,7 @@ export function Sidebar({ className }: { className?: string }) {
       path: '/admin',
       icon: UsersIcon,
       roles: [UserRole.ADMIN],
+      permission: PERMISSIONS.MANAGE_USERS,
     },
     {
       name: 'Settings',
@@ -74,6 +80,7 @@ export function Sidebar({ className }: { className?: string }) {
       path: '/settings',
       icon: SettingsIcon,
       roles: [UserRole.ADMIN],
+      permission: PERMISSIONS.ACCESS_SETTINGS,
     },
     {
       name: 'Customer Queue',
@@ -82,6 +89,7 @@ export function Sidebar({ className }: { className?: string }) {
       icon: QueueListIcon,
       roles: [UserRole.ADMIN, UserRole.CASHIER, UserRole.KITCHEN],
       isPublic: true,
+      permission: null,
     },
   ];
 
@@ -89,7 +97,20 @@ export function Sidebar({ className }: { className?: string }) {
   
   const handleLogout = () => {
     logout();
-    navigate('/login');
+  };
+
+  // Check if the user has permission to see a menu item
+  const canAccessMenuItem = (item: any) => {
+    // Public items or role-based access
+    if (item.isPublic) return true;
+    
+    // Check role-based access
+    const hasRole = currentUser && item.roles.includes(currentUser.role as UserRole);
+    
+    // Check permission-based access
+    const hasRequiredPermission = !item.permission || hasPermission(item.permission);
+    
+    return hasRole && hasRequiredPermission;
   };
 
   return (
@@ -103,7 +124,7 @@ export function Sidebar({ className }: { className?: string }) {
       </div>
       <div className="flex-1 space-y-1">
         {nav.map((item) => (
-          ((item.roles.includes(currentUser?.role as UserRole) || item.isPublic)) && (
+          canAccessMenuItem(item) && (
             <Link key={item.name} to={item.path}>
               <Button
                 variant={pathname === item.path ? "secondary" : "ghost"}

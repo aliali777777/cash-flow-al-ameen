@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
+import { UserNavigation } from './common/UserNavigation';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -27,7 +28,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
   
-  return <>{children}</>;
+  return (
+    <div className="flex flex-col min-h-screen">
+      <UserNavigation />
+      <div className="flex-1">
+        {children}
+      </div>
+    </div>
+  );
 };
 
 export default ProtectedRoute;

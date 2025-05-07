@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Permission } from '../types';
 import { setCurrentUser, getCurrentUser, clearCurrentUser, getUsers } from '../utils/storage';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -52,13 +53,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    // Clear all user state
-    setUser(null);
-    setIsAuthenticated(false);
-    clearCurrentUser();
-    
-    // Force a clean navigation to login page
-    window.location.href = '/login';
+    try {
+      // Clear all user state
+      setUser(null);
+      setIsAuthenticated(false);
+      clearCurrentUser();
+      
+      // Show logout toast
+      toast.success("تم تسجيل الخروج بنجاح");
+      
+      // Force a clean navigation to login page
+      window.location.href = '/login';
+    } catch (error) {
+      console.error("Error during logout:", error);
+      toast.error("حدث خطأ أثناء تسجيل الخروج");
+    }
   };
 
   const hasPermission = (permissionId: string): boolean => {
